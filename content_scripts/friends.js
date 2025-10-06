@@ -52,24 +52,38 @@ function mapUserIds(usersAll) {
 
 // Highlight usernames in the DOM
 function highlightUsers(sessionData, userMap, friends, block) {
-  console.log('Highlighting users', { friends, block });
-  // Highlight storytellers in summary rows
-  document.querySelectorAll('tr.summary').forEach(summaryRow => {
-    const stCell = summaryRow.querySelector('td.storyteller');
-    if (!stCell) return;
-    stCell.querySelectorAll('span').forEach(span => {
-      const username = span.textContent.trim();
-      const userId = Object.keys(userMap).find(id => userMap[id] === username);
-      span.classList.remove('botc-friend', 'botc-block');
-      if (userId) {
-        if (block.includes(userId)) span.classList.add('botc-block');
-        else if (friends.includes(userId)) span.classList.add('botc-friend');
-      }
-    });
-  });
+  // Merge logic: for each summary/details row pair, consider both storytellers and players
+  const allRows = document.querySelectorAll('tr.summary');
+  allRows.forEach(summaryRow => {
+    const detailsRow = summaryRow.nextElementSibling;
+    if (!detailsRow || !detailsRow.classList.contains('details')) return;
 
-  // Highlight players in details rows and their preceding summary rows
-  document.querySelectorAll('tr.details').forEach(detailsRow => {
+    // Remove previous highlights
+    summaryRow.classList.remove('botc-row-block', 'botc-row-friend');
+    detailsRow.classList.remove('botc-row-block', 'botc-row-friend');
+
+    // Storyteller highlight logic
+    const stCell = summaryRow.querySelector('td.storyteller');
+    let stBlocked = false;
+    let stFriend = false;
+    if (stCell) {
+      stCell.querySelectorAll('span').forEach(span => {
+        const username = span.textContent.trim();
+        const userId = Object.keys(userMap).find(id => userMap[id] === username);
+        span.classList.remove('botc-friend', 'botc-block');
+        if (userId) {
+          if (block.includes(userId)) {
+            span.classList.add('botc-block');
+            stBlocked = true;
+          } else if (friends.includes(userId)) {
+            span.classList.add('botc-friend');
+            stFriend = true;
+          }
+        }
+      });
+    }
+
+    // Player highlight logic
     let hasBlocked = false;
     let hasFriend = false;
     detailsRow.querySelectorAll('.players .player').forEach(span => {
@@ -80,30 +94,20 @@ function highlightUsers(sessionData, userMap, friends, block) {
         if (block.includes(userId)) {
           span.classList.add('botc-block');
           hasBlocked = true;
-
         } else if (friends.includes(userId)) {
           span.classList.add('botc-friend');
           hasFriend = true;
         }
       }
     });
-    // Row highlight for details row
-    detailsRow.classList.remove('botc-row-block', 'botc-row-friend');
-    // Row highlight for preceding summary row
-    const summaryRow = detailsRow.previousElementSibling;
-    if (summaryRow && summaryRow.classList.contains('summary')) {
-      summaryRow.classList.remove('botc-row-block', 'botc-row-friend');
-    }
-    if (hasBlocked) {
+
+    // Final row highlight: block wins over friend, and either storyteller or player can trigger
+    if (stBlocked || hasBlocked) {
+      summaryRow.classList.add('botc-row-block');
       detailsRow.classList.add('botc-row-block');
-      if (summaryRow && summaryRow.classList.contains('summary')) {
-        summaryRow.classList.add('botc-row-block');
-      }
-    } else if (hasFriend) {
+    } else if (stFriend || hasFriend) {
+      summaryRow.classList.add('botc-row-friend');
       detailsRow.classList.add('botc-row-friend');
-      if (summaryRow && summaryRow.classList.contains('summary')) {
-        summaryRow.classList.add('botc-row-friend');
-      }
     }
   });
 }
@@ -166,12 +170,25 @@ async function fetchAndHighlight() {
   } catch (e) {}
 }
 
-// Initial run and periodic update
+// Debounce utility
+function debounce(fn, delay) {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// Debounced fetch for DOM triggers
+const debouncedFetch = debounce(fetchAndHighlight, 1000);
+
+// Initial run
 fetchAndHighlight();
+// Periodic update
 setInterval(fetchAndHighlight, 15000);
 
 // Watch for DOM changes
 const observer = new MutationObserver(() => {
-  fetchAndHighlight();
+  debouncedFetch();
 });
 observer.observe(document.body, { childList: true, subtree: true });
