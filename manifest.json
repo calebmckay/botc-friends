@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOTC Friends",
-  "version": "0.1",
+  "version": "0.1.2",
   "description": "Allows setting friends and block lists for the Blood on the Clocktower official app.",
   "icons": {
     "48": "icons/botc-friends-48.png",
@@ -29,10 +29,6 @@
       ],
       "run_at": "document_idle"
     }
-  ],
-  "host_permissions": [
-    "*://botc.app/*",
-    "*://tauri.localhost/*"
   ],
   "browser_specific_settings": {
     "gecko": {
