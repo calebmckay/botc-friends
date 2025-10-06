@@ -36,5 +36,14 @@
   "host_permissions": [
     "*://botc.app/*",
     "*://tauri.localhost/*"
-  ]
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "botc-friends@calebmckay.com",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
 }
