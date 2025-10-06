@@ -132,14 +132,25 @@ async function tagVisiblePlayers() {
       });
     }
     if (summaryRow) {
-      const storytellerCell = summaryRow.querySelector('td.storyteller span');
-      if (storytellerCell) {
-        storytellerCell.classList.remove('botc-friend', 'botc-block');
-        if (stBlocked) {
-          storytellerCell.classList.add('botc-block');
-        } else if (stFriend) {
-          storytellerCell.classList.add('botc-friend');
-        }
+      const storytellerSpans = summaryRow.querySelectorAll('td.storyteller span');
+      if (sessionData && sessionData.storytellers && storytellerSpans.length > 0) {
+        storytellerSpans.forEach(span => {
+          span.classList.remove('botc-friend', 'botc-block');
+          const username = span.textContent.trim();
+          const st = sessionData.storytellers.find(storyteller => {
+            const stId = storyteller.id || (storyteller.User && storyteller.User.id);
+            const stName = storyteller.username || (storyteller.User && storyteller.User.username);
+            return stName === username;
+          });
+          if (st) {
+            const stId = st.id || (st.User && st.User.id);
+            if (block.includes(stId)) {
+              span.classList.add('botc-block');
+            } else if (friends.includes(stId)) {
+              span.classList.add('botc-friend');
+            }
+          }
+        });
       }
     }
 
