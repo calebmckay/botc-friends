@@ -22,21 +22,37 @@ function getLists() {
     }).filter(Boolean);
   }
   return new Promise(resolve => {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(['friends', 'block'], data => {
+    // Try browser.storage.local (Firefox), then chrome.storage.local (Chrome), then fallback
+    if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+      browser.storage.local.get(['friends', 'block']).then(data => {
         let friends = extractIds(data.friends);
         let block = extractIds(data.block);
         resolve({ friends, block });
+      }, () => {
+        // fallback to chrome or localStorage if browser.storage fails
+        tryChromeOrLocal();
       });
     } else {
-      // fallback to localStorage
-      let friends = [];
-      let block = [];
-      try {
-        friends = extractIds(JSON.parse(localStorage.getItem('friends')));
-        block = extractIds(JSON.parse(localStorage.getItem('block')));
-      } catch (e) {}
-      resolve({ friends, block });
+      tryChromeOrLocal();
+    }
+
+    function tryChromeOrLocal() {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(['friends', 'block'], data => {
+          let friends = extractIds(data.friends);
+          let block = extractIds(data.block);
+          resolve({ friends, block });
+        });
+      } else {
+        // fallback to localStorage
+        let friends = [];
+        let block = [];
+        try {
+          friends = extractIds(JSON.parse(localStorage.getItem('friends')));
+          block = extractIds(JSON.parse(localStorage.getItem('block')));
+        } catch (e) {}
+        resolve({ friends, block });
+      }
     }
   });
 }
