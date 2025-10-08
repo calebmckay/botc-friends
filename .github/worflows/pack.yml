@@ -1,0 +1,36 @@
+name: Pack and Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  pack-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from manifest.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create zip archive
+        run: |
+          zip -r botc-friends-${VERSION}.zip content_scripts/ icons/ popup/ manifest.json
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: botc-friends-${{ env.VERSION }}.zip
+          path: botc-friends-${{ env.VERSION }}.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: botc-friends-${{ env.VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
