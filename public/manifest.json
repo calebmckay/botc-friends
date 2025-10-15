@@ -13,7 +13,7 @@
       "48": "icons/botc-friends-48.png"
     },
     "default_title": "BOTC Friends",
-    "default_popup": "popup/popup.html"
+    "default_popup": "index.html"
   },
   "permissions": [
     "storage"
