@@ -24,7 +24,7 @@
         "*://botc.app/*"
       ],
       "js": [
-        "content_scripts/friends.js"
+        "background.js"
       ],
       "run_at": "document_idle"
     }

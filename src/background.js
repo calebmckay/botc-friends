@@ -21,40 +21,33 @@ function getLists() {
       return match ? match[1] : null;
     }).filter(Boolean);
   }
-  return new Promise(resolve => {
-    // Try browser.storage.local (Firefox), then chrome.storage.local (Chrome), then fallback
-    if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
-      browser.storage.local.get(['friends', 'block']).then(data => {
-        let friends = extractIds(data.friends);
-        let block = extractIds(data.block);
-        resolve({ friends, block });
-      }, () => {
-        // fallback to chrome or localStorage if browser.storage fails
-        tryChromeOrLocal();
-      });
-    } else {
-      tryChromeOrLocal();
-    }
 
-    function tryChromeOrLocal() {
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.get(['friends', 'block'], data => {
-          let friends = extractIds(data.friends);
-          let block = extractIds(data.block);
-          resolve({ friends, block });
-        });
-      } else {
-        // fallback to localStorage
-        let friends = [];
-        let block = [];
-        try {
-          friends = extractIds(JSON.parse(localStorage.getItem('friends')));
-          block = extractIds(JSON.parse(localStorage.getItem('block')));
-        } catch (e) {}
-        resolve({ friends, block });
-      }
-    }
-  });
+  if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+    // Firefox
+    return browser.storage.local.get(['friends', 'block']).then(data => {
+      let friends = extractIds(data.friends);
+      let block = extractIds(data.block);
+      return { friends, block };
+    });
+  } else if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    // Chrome
+    return chrome.storage.local.get(['friends', 'block']).then(data => {
+      let friends = extractIds(data.friends);
+      let block = extractIds(data.block);
+      return { friends, block };
+    });
+  } else {
+    // Fallback to localStorage
+    return new Promise(resolve => {
+      let friends = [];
+      let block = [];
+      try {
+        friends = extractIds(JSON.parse(localStorage.getItem('friends')));
+        block = extractIds(JSON.parse(localStorage.getItem('block')));
+      } catch (e) {}
+      resolve({ friends, block });
+    });
+  }
 }
 
 // Utility: Map userId to username from usersAll
@@ -126,6 +119,37 @@ function highlightUsers(sessionData, userMap, friends, block) {
       detailsRow.classList.add('botc-row-friend');
     }
   });
+}
+
+async function refreshAccessToken() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+}
+
+async function fetchSessions() {
+  // Retrieve the token used for authentication
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  const tokenResp = await fetch('/backend/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ token })
+  });
+  if (!tokenResp.ok) return;
+
+  const tokenData = await tokenResp.json();
+  accessToken = tokenData.accessToken;
+  if (!accessToken) return;
+
+  // Store accessToken and timestamp
+  localStorage.setItem('accessToken', accessToken);
+  // Assume token expires in 10 minutes (600000 ms)
+  const TOKEN_EXPIRY_MS = 10 * 60 * 1000;
+  const accessTokenExpires = Date.now() + TOKEN_EXPIRY_MS;
+  localStorage.setItem('accessTokenExpires', accessTokenExpires.toString());
 }
 
 // Fetch sessions and update highlights
