@@ -7,20 +7,18 @@ import {
   faChevronUp,
   faChevronDown,
   faChevronRight,
+  faPlus,
   faPalette,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons"
 
 import ListItem from './ListItem';
 
 const List = ({ open, list }) => {
   const [isOpen, setIsOpen] = useState(open);
+  const [listName, setListName] = useState(list.name);
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const [color, setColor] = useState({
-    r: '241',
-    g: '112',
-    b: '19',
-    a: '1',
-  });
+  const [color, setColor] = useState(list.color || { r: '241', g: '112', b: '19', a: '1' });
 
   const toggleOpen = () => {
     setIsOpen(!isOpen);
@@ -38,6 +36,10 @@ const List = ({ open, list }) => {
     setColor(color.rgb);
   };
 
+  const handleListNameChange = (e) => {
+    setListName(e.target.value)
+  }
+
   const styles = reactCSS({
     default: {
       color: {
@@ -50,12 +52,11 @@ const List = ({ open, list }) => {
     <div>
       <div className="p-2 flex justify-start content-center items-center relative">
         <FontAwesomeIcon className="m-1" onClick={toggleOpen} icon={isOpen ? faChevronDown : faChevronRight} />
-        <p className="flex-5" onClick={toggleOpen}>{list.name}</p>
+        {/* <p className="flex-0" onClick={toggleOpen}>{listName}</p> */}
+        <input type="text" className="flex-none border-b-1 border-b-white my-1 py-1" value={listName} size={listName.length} onChange={handleListNameChange}/>
+        <div className="grow" />
         <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faChevronUp} />
-        </button>
-        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faChevronDown} />
+          <FontAwesomeIcon icon={faPlus} />
         </button>
         <button style={ styles.color } onClick={handleClick} className="flex-0 mx-1 px-1 rounded hover:brightness-70">
           <FontAwesomeIcon icon={faPalette} />
@@ -64,6 +65,15 @@ const List = ({ open, list }) => {
           <div className="fixed top-0 left-0 right-0 bottom-0" onClick={handleClose} />
           <SketchPicker disableAlpha={true} color={color} onChange={handleChange} />
         </div> : null }
+        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
+          <FontAwesomeIcon icon={faChevronUp} />
+        </button>
+        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
+          <FontAwesomeIcon icon={faChevronDown} />
+        </button>
+        <button className="flex-0 text-white bg-red-800 mx-1 px-1 rounded hover:brightness-70">
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
       </div>
       <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
         {list.items.map(item => <ListItem key={item.id} {...item} />)}
