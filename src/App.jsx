@@ -3,52 +3,19 @@ import Footer from './components/Footer'
 import List from './components/List'
 import UserInput from './components/UserInput'
 
+import { useSelector } from 'react-redux';
+
 ReactModal.defaultStyles.content.backgroundColor = 'var(--color-gray-700)';
 
-const demoList = [
-  {
-    id: 1,
-    name: "Friends",
-    color: {
-      r: '46',
-      g: '125',
-      b: '50',
-      a: '1'
-    },
-    items: [
-      {
-        id: 8274423742618,
-        name: "spellbee"
-      },
-      {
-        id: 8330200514714,
-        name: "Bones" 
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Block",
-    color: {
-      r: '189',
-      g: '40',
-      b: '40',
-      a: '1'
-    },
-    items: [
-      {
-        id: 8274374230170,
-        name: "Bearface"
-      },
-    ]
-  },
-]
-
 function App() {
+  const settings = useSelector((state) => state.settings);
+  const lists = useSelector((state) => state.lists);
+
   return (
     <main>
-      <List list={demoList[0]} />
-      <List list={demoList[1]} />
+      {lists.map((list, index) => (
+        <List key={index} list={list} />
+      ))}
       <Footer />
       
       <ReactModal

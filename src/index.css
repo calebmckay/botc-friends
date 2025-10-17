@@ -1,14 +1,8 @@
 @import "tailwindcss";
 
-/* * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
-  padding: 40px;
-  background-color: #151515;
-  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
-  color: #ffffff;
-} */
+  min-height: 400px;
+  margin: auto;
+  padding: 16px;
+  border-radius: 8px;
+}

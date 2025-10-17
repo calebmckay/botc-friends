@@ -1,16 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const initialSettings = {
+  editing: false,
+  includeSpectators: false,
+}
+
 const settingsSlice = createSlice({
   name: "settings",
-  initialState: [],
+  initialState: initialSettings,
   reducers: {
-    loadFromStorage: () => {
-      return JSON.parse(localStorage.getItem("friendLists")) || [];
+    toggleEditing: (state) => {
+      state.editing = !state.editing;
     },
-    saveToStorage: (state) => {
-      localStorage.setItem("friendLists", JSON.stringify(state));
+    toggleIncludeSpectators: (state) => {
+      state.includeSpectators = !state.includeSpectators;
+    },
+    resetSettings: (state) => {
+      state.editing = initialSettings.editing;
+      state.includeSpectators = initialSettings.includeSpectators;
     }
   }
 });
 
 export default settingsSlice.reducer;
+export const { toggleEditing, toggleIncludeSpectators, resetSettings } = settingsSlice.actions;
