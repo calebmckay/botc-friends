@@ -18,12 +18,17 @@ jobs:
       - name: Extract version from manifest.json
         id: get_version
         run: |
-          VERSION=$(jq -r .version manifest.json)
+          VERSION=$(jq -r .version public/manifest.json)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Run build script
+        run: |
+          npm install
+          npm run build
 
       - name: Create zip archive
         run: |
-          zip -r botc-friends-${VERSION}.zip content_scripts/ icons/ popup/ manifest.json
+          cd build && zip -r ../botc-friends-${{ env.VERSION }}.zip ./*
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
