@@ -17,20 +17,7 @@ const demoLists = [
       b: '50',
       a: '1'
     },
-    users: [
-      {
-        id: 8274423742618,
-        name: "spellbee"
-      },
-      {
-        id: 8330200514714,
-        name: "Bones" 
-      },
-      {
-        id: 8277248671898,
-        name: "Satyr"
-      }
-    ]
+    users: []
   },
   {
     name: "Block",
@@ -40,12 +27,7 @@ const demoLists = [
       b: '40',
       a: '1'
     },
-    users: [
-      {
-        id: 8274374230170,
-        name: "Bearface"
-      },
-    ]
+    users: []
   },
 ]
 
@@ -80,9 +62,19 @@ function injectCSS() {
 }
 
 function updateLists() {
-  // For now, use demo data
-  // lists = JSON.parse(localStorage.getItem('botc-friends-lists'));
-  lists = demoLists;
+  const storageData = localStorage.getItem('botc-friends');
+  if (!storageData) {
+    console.error("No stored lists found");
+    localStorage.setItem('botc-friends', JSON.stringify(demoLists));
+    return;
+  }
+  try {
+    lists = JSON.parse(storageData);
+  } catch (e) {
+    console.error("Failed to parse stored lists:", e);
+    return;
+  }
+
 
   // Map userId to list index for quick lookup
   userIdMap = {};
@@ -278,6 +270,23 @@ function waitForElement(selector, callback) {
   }, 100); // Check every 100ms
 }
 
+function messageListener(message, sender, sendResponse) {
+  console.log("Background received message:", message);
+  switch (message.type) {
+    case 'getLists':
+      sendResponse({ success: true, lists });
+      break;
+    case 'saveLists':
+      localStorage.setItem('botc-friends', JSON.stringify(message.lists));
+      updateLists();
+      sendResponse({ success: true });
+      break;
+    default:
+      console.warn('Unknown message type:', message.type);
+      sendResponse({ success: false, error: 'Unknown message type' });
+  }
+}
+
 $(document).ready(() => {
   waitForElement("table.list > tbody", () => {
     updateLists();
@@ -289,3 +298,6 @@ $(document).ready(() => {
     updateObserver.observe(document.querySelector("section.list"), { childList: true });
   });
 });
+
+chrome.runtime.onMessage.addListener(messageListener);
+console.log("BotC Friends background script loaded");

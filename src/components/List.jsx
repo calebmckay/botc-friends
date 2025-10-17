@@ -3,7 +3,9 @@ import reactCSS from 'reactcss';
 // import { useSelector } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SketchPicker } from "react-color"
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import ReactModal from 'react-modal';
+import { motion } from 'motion/react';
 import {
   faChevronUp,
   faChevronDown,
@@ -14,13 +16,19 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 
 import ListItem from './ListItem';
+import UserInput from './UserInput';
+import { addUser, deleteList, moveListDown, moveListUp, updateList } from '../state/lists/listSlice';
+import { setChangesPending } from '../state/settings/settingsSlice';
 
-const List = ({ open, list }) => {
+const List = ({ ref, listIndex, list }) => {
+  const dispatch = useDispatch();
+  const listCount = useSelector((state) => state.lists.length);
   const isEditing = useSelector((state) => state.settings.editing);
-  const [isOpen, setIsOpen] = useState(open);
-  const [listName, setListName] = useState(list.name);
+
+  const [isOpen, setIsOpen] = useState(false);
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const [color, setColor] = useState(list.color || { r: '241', g: '112', b: '19', a: '1' });
+  const [tempListName, setTempListName] = useState(list.name);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleOpen = () => {
     setIsOpen(!isOpen);
@@ -35,67 +43,146 @@ const List = ({ open, list }) => {
   };
 
   const handleChange = (color) => {
-    setColor(color.rgb);
+    dispatch(updateList({
+      listIndex,
+      list: {
+        ...list,
+        color: color.rgb,
+      },
+    }))
+    dispatch(setChangesPending(true));
   };
 
   const handleListNameChange = (e) => {
-    setListName(e.target.value)
+    setTempListName(e.target.value);
+    dispatch(setChangesPending(true));
+  }
+
+  const handleListNameBlur = () => {
+    dispatch(updateList({
+      listIndex,
+      list: {
+        ...list,
+        name: tempListName,
+      },
+    }))
   }
 
   const styles = reactCSS({
     default: {
       color: {
-        background: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`,
+        background: `rgba(${list.color.r}, ${list.color.g}, ${list.color.b}, ${list.color.a})`,
       }
     },
   });
 
   return (
-    <div>
+    <div ref={ref}>
       <div className="p-2 flex justify-start content-center items-center relative">
         <FontAwesomeIcon className="m-1" onClick={toggleOpen} icon={isOpen ? faChevronDown : faChevronRight} />
         {isEditing ?
-          <input type="text" className="flex-none border-b-1 border-b-white my-1 py-1" value={listName} size={listName.length} onChange={handleListNameChange}/> :
-          <p className="flex-0" onClick={toggleOpen}>{listName}</p>
+          <input type="text" className="flex-none border-b-1 border-b-white my-1 py-1" value={tempListName} size={list.name.length} onChange={handleListNameChange} onBlur={handleListNameBlur}/> :
+          <p className="flex-0 text-nowrap" onClick={toggleOpen}>{tempListName}</p>
         }
         <div className="grow" />
-        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faPlus} />
-        </button>
-        <button style={ styles.color } onClick={handleClick} className="flex-0 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faPalette} />
-        </button>
-        { displayColorPicker ? <div className="absolute z-2 top-9 right-3">
-          <div className="fixed top-0 left-0 right-0 bottom-0" onClick={handleClose} />
-          <SketchPicker disableAlpha={true} color={color} onChange={handleChange} />
-        </div> : null }
-        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faChevronUp} />
-        </button>
-        <button className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faChevronDown} />
-        </button>
-        <button className="flex-0 text-white bg-red-800 mx-1 px-1 rounded hover:brightness-70">
-          <FontAwesomeIcon icon={faTrash} />
-        </button>
+        { isEditing && (
+          <div>
+            <button
+              className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70"
+              onClick={() => {
+                setIsOpen(true)
+                setIsModalOpen(true)
+              }}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+            <button
+              disabled={listIndex === 0}
+              className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70 disabled:opacity-30"
+              onClick={() => {
+                dispatch(moveListUp(listIndex));
+                dispatch(setChangesPending(true));
+              }}
+            >
+              <FontAwesomeIcon icon={faChevronUp} />
+            </button>
+            <button
+              disabled={listIndex === listCount - 1}
+              className="flex-0 text-black bg-gray-300 mx-1 px-1 rounded hover:brightness-70 disabled:opacity-30"
+              onClick={() => {
+                dispatch(moveListDown(listIndex));
+                dispatch(setChangesPending(true));
+              }}
+            >
+              <FontAwesomeIcon icon={faChevronDown} />
+            </button>
+            <button
+              className="flex-0 text-white bg-red-800 mx-1 px-1 rounded hover:brightness-70"
+              onClick={() => {
+                if (confirm(`Delete list "${list.name}"?`)) {
+                  dispatch(deleteList(listIndex));
+                  dispatch(setChangesPending(true));
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          </div>
+        )}
+        {isEditing ?
+          <div>
+            <button style={ styles.color } onClick={handleClick} className="flex-0 mx-1 px-1 rounded hover:brightness-70">
+              <FontAwesomeIcon icon={faPalette} />
+            </button>
+            { displayColorPicker ? <div className="absolute z-2 top-9 right-3">
+              <div className="fixed top-0 left-0 right-0 bottom-0" onClick={handleClose} />
+              <SketchPicker disableAlpha={true} color={list.color} onChange={handleChange} />
+            </div> : null }
+          </div>
+        :
+          <div style={ styles.color } className="flex-0 mx-1 px-1 rounded">
+            <FontAwesomeIcon style={{opacity: 0}} icon={faPalette} />
+          </div>
+        }
+        
       </div>
       <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
-        {list.users.map(item => <ListItem key={item.id} {...item} />)}
+        {list.users.map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} {...item} />)}
       </div>
+
+      <ReactModal
+        isOpen={isModalOpen}
+        ariaHideApp={false}
+        style={{
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1,
+          },
+          content: {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            transform: 'translate(-50%, -50%)',
+            margin: 0,
+            zIndex: 2,
+          }
+        }}
+      >
+        <UserInput 
+          title="Add User"
+          onCancel={() => setIsModalOpen(false)}
+          onSave={({name, id}) => {
+            dispatch(addUser({ listIndex, user: { name, id } }))
+            dispatch(setChangesPending(true));
+            setIsModalOpen(false)
+          }}
+        />
+      </ReactModal>
     </div>
   );
 };
 
-// const Lists = () => {
-//   const lists = useSelector((state) => state.lists);
-
-//   return (
-//     <div>
-//       {lists.map((list) => (
-//         <List key={list.id} list={list} />
-//       ))}
-//     </div>
-//   );
-// };
-
-export default List;
+const MotionList = motion.create(List);
+export default MotionList;

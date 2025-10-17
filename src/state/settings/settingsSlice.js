@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialSettings = {
   editing: false,
   includeSpectators: false,
+  changesPending: false,
 }
 
 const settingsSlice = createSlice({
@@ -18,9 +19,12 @@ const settingsSlice = createSlice({
     resetSettings: (state) => {
       state.editing = initialSettings.editing;
       state.includeSpectators = initialSettings.includeSpectators;
+    },
+    setChangesPending: (state, action) => {
+      state.changesPending = action.payload;
     }
   }
 });
 
 export default settingsSlice.reducer;
-export const { toggleEditing, toggleIncludeSpectators, resetSettings } = settingsSlice.actions;
+export const { toggleEditing, setChangesPending } = settingsSlice.actions;

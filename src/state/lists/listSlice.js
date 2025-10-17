@@ -1,25 +1,155 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+
+const getRandomInt = (max) => {
+  return Math.floor(Math.random() * max);
+}
+
+export const listsJsonSchema = {
+  type: "array",
+  items: {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      color: {
+        type: "object",
+        properties: {
+          r: { type: "string" },
+          g: { type: "string" },
+          b: { type: "string" },
+          a: { type: "string" }
+        },
+        required: ["r", "g", "b", "a"]
+      },
+      users: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            name: { type: "string" }
+          },
+          required: ["id", "name"]
+        }
+      }
+    },
+    required: ["name", "color", "users"]
+  }
+}
+
+export const fetchListsFromStorage = createAsyncThunk(
+  'lists/fetchFromStorage',
+  async () => {
+    let storedData = null;
+    // Check if running in a Chrome extension context
+    try {
+      const [tab] = await chrome.tabs.query({ url: "*://botc.app/*" });
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "getLists" });
+      if (response.success) {
+        storedData = response.lists;
+      }
+    } catch (e) {
+      console.log("Not running in an extension - loading directly from localStorage", e);
+      storedData = JSON.parse(localStorage.getItem("botc-friends"));
+    }
+    return storedData || [];
+  }
+);
+
+export const saveListsToStorage = createAsyncThunk(
+  'lists/saveToStorage',
+  async (lists, { getState }) => {
+    try {
+      const [tab] = await chrome.tabs.query({ url: "*://botc.app/*" });
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "saveLists", lists });
+      if (!response.success) {
+        console.error("Failed to save lists to storage.");
+      }
+    } catch (e) {
+      console.log("Not running in an extension - saving directly to localStorage", e);
+      localStorage.setItem("botc-friends", JSON.stringify(lists));
+    }
+  }
+);
 
 const listSlice = createSlice({
   name: "lists",
   initialState: [],
   reducers: {
-    loadLists: (state, action) => {
-      state = action.payload;
+    // loadLists: (state) => {
+    //   const storedData = localStorage.getItem("botc-friends");
+    //   if (storedData) {
+    //     try {
+    //       state = JSON.parse(storedData);
+    //       return state;
+    //     } catch (e) {
+    //       console.error("Failed to parse stored lists:", e);
+    //     }
+    //   } else {
+    //     console.log("No stored lists found.");
+    //     return state;
+    //   }
+    // },
+    // saveLists: (state) => {
+    //   localStorage.setItem("botc-friends", JSON.stringify(state));
+    //   console.log("Lists saved to localStorage.");
+    // },
+    importLists: (state, action) => {
+      const jsonData = action.payload;
+      jsonData.forEach((newList) => {
+        const matchingList = state.findIndex((oldList) => oldList.name === newList.name);
+        if (matchingList !== -1) {
+          confirm(`Overwrite existing list "${newList.name}"?`) && (state[matchingList] = newList);
+        } else {
+          state.push(newList);
+        }
+      })
     },
     deleteList(state, action) {
-      state = state.filter((list, index) => index !== action.payload);
+      return state.filter((list, index) => index !== action.payload);
     },
     createList(state) {
+      // To prevent identical names, we can append a number if needed
+      let newName = "New List";
+      let nameSuffix = 1;
+      while (state.find((list) => list.name === newName)) {
+        newName = `New List (${nameSuffix})`;
+        nameSuffix += 1;
+      }
       state.push({
-        name: "New List",
+        name: newName,
+        color: {
+          r: getRandomInt(255).toString(),
+          g: getRandomInt(255).toString(),
+          b: getRandomInt(255).toString(),
+          a: '1'
+        },
         users: [],
       });
     },
     updateList(state, action) {
-      state[action.payload.id] = {
-        ...action.payload
-      };
+      const { listIndex, list } = action.payload;
+      state[listIndex] = list;
+    },
+    addUser(state, action) {
+      const { listIndex, user } = action.payload;
+      const list = state[listIndex];
+      if (list) {
+        list.users.push(user);
+      }
+    },
+    editUser(state, action) {
+      const { listIndex, itemIndex, user } = action.payload;
+      const list = state[listIndex];
+      if (list) {
+        list.users[itemIndex] = user;
+      }
+    },
+    removeUser(state, action) {
+      const { listIndex, itemIndex } = action.payload;
+      const list = state[listIndex];
+      if (list) {
+        list.users = list.users.filter((user, index) => index !== itemIndex);
+      }
     },
     moveListUp(state, action) {
       const index = action.payload;
@@ -33,8 +163,17 @@ const listSlice = createSlice({
         [state[index + 1], state[index]] = [state[index], state[index + 1]];
       }
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchListsFromStorage.fulfilled, (state, action) => {
+        return action.payload;
+      })
+      .addCase(saveListsToStorage.fulfilled, (state, action) => {
+        // No state change needed after saving
+      });
   }
 });
 
 export default listSlice.reducer;
-export const { loadLists, deleteList, createList, updateList, moveListUp, moveListDown } = listSlice.actions;
+export const { importLists, deleteList, createList, updateList, addUser, editUser, removeUser, moveListUp, moveListDown } = listSlice.actions;
