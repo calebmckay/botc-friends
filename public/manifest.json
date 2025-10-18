@@ -27,7 +27,6 @@
         "*://botc.app/*"
       ],
       "js": [
-        "jquery-3.7.1.min.js",
         "background.js"
       ],
       "run_at": "document_idle"

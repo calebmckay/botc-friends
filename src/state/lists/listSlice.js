@@ -57,7 +57,7 @@ export const fetchListsFromStorage = createAsyncThunk(
 
 export const saveListsToStorage = createAsyncThunk(
   'lists/saveToStorage',
-  async (lists, { getState }) => {
+  async (lists) => {
     try {
       const [tab] = await chrome.tabs.query({ url: "*://botc.app/*" });
       const response = await chrome.tabs.sendMessage(tab.id, { type: "saveLists", lists });
@@ -169,7 +169,7 @@ const listSlice = createSlice({
       .addCase(fetchListsFromStorage.fulfilled, (state, action) => {
         return action.payload;
       })
-      .addCase(saveListsToStorage.fulfilled, (state, action) => {
+      .addCase(saveListsToStorage.fulfilled, () => {
         // No state change needed after saving
       });
   }

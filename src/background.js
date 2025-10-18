@@ -205,7 +205,8 @@ function highlightSpectators(detailsRow, spectators) {
 
 function highlightLobby(lobbyId) {
   const session = sessions.find(s => s.name === lobbyId);
-  const summaryRow = $(`table.list div.button.primary:contains("${lobbyId}")`).closest('tr')[0];
+  const summaryRow = Array.from(document.querySelectorAll('table.list div.button.primary'))
+    .find(div => div.textContent.trim() === lobbyId)?.closest('tr');
   if (!session || !summaryRow) return;
   const detailsRow = summaryRow.nextElementSibling;
   if (!detailsRow || !detailsRow.classList.contains('details')) return;
@@ -235,23 +236,6 @@ function highlightAllLobbies() {
     highlightLobby(lobbyId);
   });
 }
-
-// const observer = new MutationObserver((mutationList) => {
-//   for (const mutation of mutationList) {
-//     if (mutation.type === 'childList' || mutation.type === 'attributes') {
-//       let lobbyId = null
-//       if (mutation.target.classList.contains('summary')) {
-//         lobbyId = mutation.target.querySelector("div.button.primary").textContent.trim();
-//       } else if (mutation.target.classList.contains('details')) {
-//         lobbyId = mutation.target.previousElementSibling.querySelector("div.button.primary").textContent.trim();
-//       }
-//       if (lobbyId) {
-//         console.log(`Highlighting lobby ${lobbyId}`);
-//         highlightLobby(lobbyId);
-//       }
-//     }
-//   }
-// });
 
 const updateObserver = new MutationObserver((mutationList) => {
   mutationList.forEach(mutation => {
@@ -293,7 +277,7 @@ function messageListener(message, sender, sendResponse) {
   }
 }
 
-$(document).ready(() => {
+document.addEventListener('DOMContentLoaded', () => {
   waitForElement("table.list > tbody", () => {
     updateLists();
     fetchSessions().then(() => highlightAllLobbies());
