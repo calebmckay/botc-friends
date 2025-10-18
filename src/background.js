@@ -166,6 +166,8 @@ function highlightStorytellers(summaryRow, storytellers) {
     if (Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
       span.classList.add(`botc-friends-${userIdMap[userId]}`);
       highestPrecedence = Math.min(highestPrecedence, userIdMap[userId]);
+    } else {
+      span.classList.remove(...Array.from(span.classList).filter(c => c.startsWith('botc-friends-')));
     }
   });
   return highestPrecedence;
@@ -178,6 +180,8 @@ function highlightPlayers(detailsRow, players) {
     if (Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
       span.classList.add(`botc-friends-${userIdMap[userId]}`);
       highestPrecedence = Math.min(highestPrecedence, userIdMap[userId]);
+    } else {
+      span.classList.remove(...Array.from(span.classList).filter(c => c.startsWith('botc-friends-')));
     }
   });
   return highestPrecedence;
@@ -192,6 +196,8 @@ function highlightSpectators(detailsRow, spectators) {
     if (userId && Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
       span.classList.add(`botc-friends-${userIdMap[userId]}`);
       highestPrecedence = Math.min(highestPrecedence, userIdMap[userId]);
+    } else {
+      span.classList.remove(...Array.from(span.classList).filter(c => c.startsWith('botc-friends-')));
     }
   });
   return highestPrecedence;
