@@ -13,10 +13,10 @@ export const listsJsonSchema = {
       color: {
         type: "object",
         properties: {
-          r: { type: "string" },
-          g: { type: "string" },
-          b: { type: "string" },
-          a: { type: "string" }
+          r: { type: "number" },
+          g: { type: "number" },
+          b: { type: "number" },
+          a: { type: "number" }
         },
         required: ["r", "g", "b", "a"]
       },

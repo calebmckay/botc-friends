@@ -47,7 +47,7 @@ const List = ({ ref, listIndex, list }) => {
       listIndex,
       list: {
         ...list,
-        color: color.rgb,
+        color: {r: parseInt(color.rgb.r), g: parseInt(color.rgb.g), b: parseInt(color.rgb.b), a: parseInt(color.rgb.a)},
       },
     }))
     dispatch(setChangesPending(true));
