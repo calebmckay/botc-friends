@@ -47,6 +47,7 @@ const List = ({ ref, listIndex, list }) => {
       listIndex,
       list: {
         ...list,
+        users: list.users.sort((a, b) => a.name.localeCompare(b.name)),
         color: {r: parseInt(color.rgb.r), g: parseInt(color.rgb.g), b: parseInt(color.rgb.b), a: parseInt(color.rgb.a)},
       },
     }))
@@ -64,6 +65,7 @@ const List = ({ ref, listIndex, list }) => {
       list: {
         ...list,
         name: tempListName,
+        users: list.users.sort((a, b) => a.name.localeCompare(b.name)),
       },
     }))
   }
