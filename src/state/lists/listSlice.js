@@ -40,7 +40,6 @@ export const fetchListsFromStorage = createAsyncThunk(
   'lists/fetchFromStorage',
   async () => {
     let storedData = null;
-    // Check if running in a Chrome extension context
     try {
       const [tab] = await chrome.tabs.query({ url: "*://botc.app/*" });
       const response = await chrome.tabs.sendMessage(tab.id, { type: "getLists" });
@@ -75,24 +74,6 @@ const listSlice = createSlice({
   name: "lists",
   initialState: [],
   reducers: {
-    // loadLists: (state) => {
-    //   const storedData = localStorage.getItem("botc-friends");
-    //   if (storedData) {
-    //     try {
-    //       state = JSON.parse(storedData);
-    //       return state;
-    //     } catch (e) {
-    //       console.error("Failed to parse stored lists:", e);
-    //     }
-    //   } else {
-    //     console.log("No stored lists found.");
-    //     return state;
-    //   }
-    // },
-    // saveLists: (state) => {
-    //   localStorage.setItem("botc-friends", JSON.stringify(state));
-    //   console.log("Lists saved to localStorage.");
-    // },
     importLists: (state, action) => {
       const jsonData = action.payload;
       jsonData.forEach((newList) => {
@@ -118,10 +99,10 @@ const listSlice = createSlice({
       state.push({
         name: newName,
         color: {
-          r: getRandomInt(255).toString(),
-          g: getRandomInt(255).toString(),
-          b: getRandomInt(255).toString(),
-          a: '1'
+          r: getRandomInt(255),
+          g: getRandomInt(255),
+          b: getRandomInt(255),
+          a: 1
         },
         users: [],
       });

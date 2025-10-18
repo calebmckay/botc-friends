@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 const UserInput = ({ title, initialUsername, initialUserId, onCancel, onSave }) => {
   const [username, setUsername] = useState(initialUsername || '');
-  const [userId, setUserId] = useState(initialUserId || '');
+  const [userId, setUserId] = useState(initialUserId || null);
   
   const handleSave = () => {
     onSave({ name: username, id: userId });
@@ -13,7 +13,7 @@ const UserInput = ({ title, initialUsername, initialUserId, onCancel, onSave }) 
   }
 
   const handleChangeUserId = (e) => {
-    setUserId(e.target.value);
+    setUserId(parseInt(e.target.value));
   }
 
   return (
