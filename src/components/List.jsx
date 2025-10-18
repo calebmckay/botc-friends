@@ -146,7 +146,7 @@ const List = ({ ref, listIndex, list }) => {
         }
         
       </div>
-      <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         {list.users.map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} {...item} />)}
       </div>
 
