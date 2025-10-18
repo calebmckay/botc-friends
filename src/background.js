@@ -277,7 +277,7 @@ function messageListener(message, sender, sendResponse) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initialize() {
   waitForElement("table.list > tbody", () => {
     updateLists();
     fetchSessions().then(() => highlightAllLobbies());
@@ -287,7 +287,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     updateObserver.observe(document.querySelector("section.list"), { childList: true });
   });
-});
+  chrome.runtime.onMessage.addListener(messageListener);
+  console.log("BotC Friends background script loaded");
+}
 
-chrome.runtime.onMessage.addListener(messageListener);
-console.log("BotC Friends background script loaded");
+document.onreadystatechange = () => {
+  if (document.readyState === "complete") {
+    initialize();
+  }
+};
