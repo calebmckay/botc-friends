@@ -250,6 +250,73 @@ const updateObserver = new MutationObserver((mutationList) => {
   });
 });
 
+const handleListSelectorChange = (e) => {
+  const selectElement = e.currentTarget;
+  const userIdLi = selectElement.parentElement;
+  const userId = parseInt(userIdLi.childNodes[1].textContent.trim());
+  const username = userIdLi.closest('div.user').querySelector('div.nameplate > div.name').textContent.trim();
+
+  const selectedOption = selectElement.value;
+  const user = { id: userId, name: username };
+
+  if (selectedOption === "") {
+    // Remove from all lists
+    lists.forEach(list => {
+      list.users = list.users.filter(u => u.id !== userId);
+    });
+  } else {
+    lists.forEach((list, index) => {
+      if (index === parseInt(selectedOption) && !list.users.find(u => u.id === userId)) {
+        lists[index].users.push(user);
+      } else if (index !== parseInt(selectedOption) && list.users.find(u => u.id === userId)) {
+        lists[index].users = list.users.filter(u => u.id !== userId);
+      }
+    });
+  }
+  // Update storage and mappings
+  localStorage.setItem('botc-friends', JSON.stringify(lists));
+  updateLists();
+  highlightAllLobbies();
+}
+
+const lobbyObserver = new MutationObserver((mutationList) => {
+  mutationList.forEach(mutation => {
+    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.user')) {
+          const userIdLi = node.querySelectorAll('li')[0];
+
+          const icon = document.createElement('img');
+          icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
+          icon.style.height = "28px";
+          icon.style.paddingLeft = "20px";
+
+          const selectLabel = document.createElement('label');
+          selectLabel.appendChild(icon);
+
+          const selectElement = document.createElement('select');
+          const defaultOption = document.createElement('option');
+          defaultOption.value = "";
+          defaultOption.textContent = "Add to list...";
+          selectElement.appendChild(defaultOption);
+
+          lists.forEach((list, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = list.name;
+            selectElement.appendChild(option);
+          });
+
+          selectElement.onchange = handleListSelectorChange;
+
+          userIdLi.appendChild(selectLabel);
+          userIdLi.appendChild(selectElement);
+        }
+      });
+    }
+  });
+});
+
 function waitForElement(selector, callback) {
   const interval = setInterval(() => {
     const element = document.querySelector(selector);
@@ -286,6 +353,7 @@ function initialize() {
       highlightAllLobbies();
     });
     updateObserver.observe(document.querySelector("section.list"), { childList: true });
+    lobbyObserver.observe(document.querySelector("div#lobby"), { childList: true });
   });
   chrome.runtime.onMessage.addListener(messageListener);
   console.log("BotC Friends background script loaded");
