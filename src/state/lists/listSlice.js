@@ -111,7 +111,7 @@ const listSlice = createSlice({
       const { listIndex, list } = action.payload;
       state[listIndex] = {
         ...list,
-        users: list.users.sort((a, b) => a.name.localeCompare(b.name)),
+        users: list.users.toSorted((a, b) => a.name.localeCompare(b.name)),
       };
     },
     addUser(state, action) {
@@ -119,7 +119,7 @@ const listSlice = createSlice({
       const list = state[listIndex];
       if (list) {
         list.users.push(user);
-        list.users = list.users.sort((a, b) => a.name.localeCompare(b.name));
+        list.users = list.users.toSorted((a, b) => a.name.localeCompare(b.name));
       }
     },
     editUser(state, action) {
@@ -127,7 +127,7 @@ const listSlice = createSlice({
       const list = state[listIndex];
       if (list) {
         list.users[itemIndex] = user;
-        list.users = list.users.sort((a, b) => a.name.localeCompare(b.name));
+        list.users = list.users.toSorted((a, b) => a.name.localeCompare(b.name));
       }
     },
     removeUser(state, action) {
@@ -135,7 +135,7 @@ const listSlice = createSlice({
       const list = state[listIndex];
       if (list) {
         list.users = list.users.filter((user, index) => index !== itemIndex);
-        list.users = list.users.sort((a, b) => a.name.localeCompare(b.name));
+        list.users = list.users.toSorted((a, b) => a.name.localeCompare(b.name));
       }
     },
     moveListUp(state, action) {
