@@ -283,38 +283,42 @@ const handleListSelectorChange = (e) => {
   highlightAllLobbies();
 }
 
-const lobbyObserver = new MutationObserver((mutationList) => {
+const insertAddToListSelector = (element) => {
+  const icon = document.createElement('img');
+  icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
+  icon.style.height = "28px";
+  icon.style.paddingLeft = "20px";
+
+  const selectLabel = document.createElement('label');
+  selectLabel.appendChild(icon);
+
+  const selectElement = document.createElement('select');
+  const defaultOption = document.createElement('option');
+  defaultOption.value = "";
+  defaultOption.textContent = "Add to list...";
+  selectElement.appendChild(defaultOption);
+
+  lists.forEach((list, index) => {
+    const option = document.createElement('option');
+    option.value = index;
+    option.textContent = list.name;
+    selectElement.appendChild(option);
+  });
+
+  selectElement.onchange = handleListSelectorChange;
+
+  element.appendChild(selectLabel);
+  element.appendChild(selectElement);
+  console.log("Inserted 'Add to list' selector for user ID:", element.childNodes[1].textContent.trim());
+}
+
+const usernameObserver = new MutationObserver((mutationList) => {
   mutationList.forEach(mutation => {
     if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.user')) {
-          const userIdLi = node.querySelectorAll('li')[0];
-
-          const icon = document.createElement('img');
-          icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
-          icon.style.height = "28px";
-          icon.style.paddingLeft = "20px";
-
-          const selectLabel = document.createElement('label');
-          selectLabel.appendChild(icon);
-
-          const selectElement = document.createElement('select');
-          const defaultOption = document.createElement('option');
-          defaultOption.value = "";
-          defaultOption.textContent = "Add to list...";
-          selectElement.appendChild(defaultOption);
-
-          lists.forEach((list, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = list.name;
-            selectElement.appendChild(option);
-          });
-
-          selectElement.onchange = handleListSelectorChange;
-
-          userIdLi.appendChild(selectLabel);
-          userIdLi.appendChild(selectElement);
+          const userIdLi = node.querySelectorAll('ul.profile > li')[0];
+          insertAddToListSelector(userIdLi);
         }
       });
     }
