@@ -290,7 +290,8 @@ function appObserverCallback(mutationList, observer) {
           if (grimoireObserver) {
             grimoireObserver.disconnect();
           }
-          grimoireObserver = new MutationObserver(grimoireObserverCallback).observe(node, { childList: true });
+          grimoireObserver = new MutationObserver(grimoireObserverCallback);
+          grimoireObserver.observe(node, { childList: true });
         } else if (node.id === 'lobby') {
           // Lobby page loaded
           if (lobbyObserver) {
@@ -298,7 +299,8 @@ function appObserverCallback(mutationList, observer) {
           }
           updateLists();
           fetchSessions().then(() => highlightAllLobbies());
-          lobbyObserver = new MutationObserver(lobbyObserverCallback).observe(node.querySelector("section.list"), { childList: true });
+          lobbyObserver = new MutationObserver(lobbyObserverCallback);
+          lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
         }
       });
       Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
@@ -324,7 +326,9 @@ function appObserverCallback(mutationList, observer) {
 }
 
 function initialize() {
-  appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  appObserver = new MutationObserver(appObserverCallback);
+  appObserver.observe(document.getElementById("app"), { childList: true });
+
   waitForElement("table.list > tbody", () => {
     updateLists();
     fetchSessions().then(() => highlightAllLobbies());
@@ -333,7 +337,8 @@ function initialize() {
       highlightAllLobbies();
     });
 
-    lobbyObserver = new MutationObserver(lobbyObserverCallback).observe(document.querySelector("section.list"), { childList: true });
+    lobbyObserver = new MutationObserver(lobbyObserverCallback);
+    lobbyObserver.observe(document.querySelector("section.list"), { childList: true });
   });
   chrome.runtime.onMessage.addListener(messageListener);
   console.log("BotC Friends background script loaded");
