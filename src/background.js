@@ -325,6 +325,12 @@ function lobbyObserverCallback(mutationList, observer) {
           insertAddToListSelector(userIdLi);
         }
       });
+      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.matches('div.loader')) {
+          // The page just fetched the session list, so we should fetch it as well
+          fetchSessions();
+        }
+      });
     }
   });
 }
@@ -358,9 +364,6 @@ function appObserverCallback(mutationList, observer) {
           removeGrimoireObserver();
         } else if (node.id === 'lobby') {
           removeLobbyObserver();
-        } else if (node.matches('div.loader')) {
-          // The page just fetched the session list, so we should fetch it as well
-          fetchSessions();
         }
       });
     }
