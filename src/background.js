@@ -241,16 +241,6 @@ function highlightAllLobbies() {
   });
 }
 
-function waitForElement(selector, callback) {
-  const interval = setInterval(() => {
-    const element = document.querySelector(selector);
-    if (element) {
-      clearInterval(interval);
-      callback(element);
-    }
-  }, 100); // Check every 100ms
-}
-
 function messageListener(message, sender, sendResponse) {
   console.log("Background received message:", message);
   switch (message.type) {
@@ -269,9 +259,16 @@ function messageListener(message, sender, sendResponse) {
 }
 
 function lobbyObserverCallback(mutationList, observer) {
-  // mutationList.forEach(mutation => {
-  //   console.log("Lobby:",mutation);
-  // });
+  mutationList.forEach(mutation => {
+    if (mutation.type === 'childList') {
+      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.matches('div.loader')) {
+          // The page just fetched the session list, so we should fetch it as well
+          fetchSessions();
+        }
+      });
+    }
+  });
 }
 
 function grimoireObserverCallback(mutationList, observer) {
@@ -286,61 +283,70 @@ function appObserverCallback(mutationList, observer) {
 
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.id === 'grimoire') {
-          // Grimoire page loaded
-          if (grimoireObserver) {
-            grimoireObserver.disconnect();
-          }
-          grimoireObserver = new MutationObserver(grimoireObserverCallback);
-          grimoireObserver.observe(node, { childList: true });
+          createGrimoireObserver(node);
         } else if (node.id === 'lobby') {
-          // Lobby page loaded
-          if (lobbyObserver) {
-            lobbyObserver.disconnect();
-          }
-          updateLists();
-          fetchSessions().then(() => highlightAllLobbies());
-          lobbyObserver = new MutationObserver(lobbyObserverCallback);
-          lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
+          createLobbyObserver(node);
         }
       });
       Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.id === 'grimoire') {
-          // Grimoire page removed
-          if (grimoireObserver) {
-            grimoireObserver.disconnect();
-            grimoireObserver = null;
-          }
+          removeGrimoireObserver();
         } else if (node.id === 'lobby') {
-          // Lobby page removed
-          if (lobbyObserver) {
-            lobbyObserver.disconnect();
-            lobbyObserver = null;
-          }
-        } else if (node.matches('div.loader')) {
-          // The page just fetched the session list, so we should fetch it as well
-          fetchSessions();
+          removeLobbyObserver();
         }
       });
     }
   });
 }
 
-function initialize() {
-  appObserver = new MutationObserver(appObserverCallback);
-  appObserver.observe(document.getElementById("app"), { childList: true });
+function createGrimoireObserver(node) {
+  if (grimoireObserver) {
+    grimoireObserver.disconnect();
+  }
+  grimoireObserver = new MutationObserver(grimoireObserverCallback);
+  grimoireObserver.observe(node, { childList: true });
+}
 
-  waitForElement("table.list > tbody", () => {
-    updateLists();
-    fetchSessions().then(() => highlightAllLobbies());
+function removeGrimoireObserver() {
+  if (grimoireObserver) {
+    grimoireObserver.disconnect();
+    grimoireObserver = null;
+  }
+}
 
-    document.querySelector("div#lobby").addEventListener('click', () => {
-      highlightAllLobbies();
-    });
+function createLobbyObserver(node) {
+  if (lobbyObserver) {
+    lobbyObserver.disconnect();
+  }
+  updateLists();
+  fetchSessions().then(() => highlightAllLobbies());
+  lobbyObserver = new MutationObserver(lobbyObserverCallback);
+  lobbyObserver.observe(node, { childList: true });
+  lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
 
-    lobbyObserver = new MutationObserver(lobbyObserverCallback);
-    lobbyObserver.observe(document.querySelector("section.list"), { childList: true });
+  document.getElementById("lobby").addEventListener('click', () => {
+    highlightAllLobbies();
   });
+}
+
+function removeLobbyObserver() {
+  if (lobbyObserver) {
+    lobbyObserver.disconnect();
+    lobbyObserver = null;
+  }
+}
+
+function initialize() {
+  updateLists();
   chrome.runtime.onMessage.addListener(messageListener);
+
+  appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  if (document.URL.includes("/play")) {
+    createGrimoireObserver(document.getElementById("grimoire"));
+  } else {
+    createLobbyObserver(document.getElementById("lobby"));
+  }
+
   console.log("BotC Friends background script loaded");
 }
 
