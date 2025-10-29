@@ -371,7 +371,8 @@ function createGrimoireObserver(node) {
   if (grimoireObserver) {
     grimoireObserver.disconnect();
   }
-  grimoireObserver = new MutationObserver(grimoireObserverCallback).observe(node, { childList: true });
+  grimoireObserver = new MutationObserver(grimoireObserverCallback);
+  grimoireObserver.observe(node, { childList: true });
 }
 
 function removeGrimoireObserver() {
