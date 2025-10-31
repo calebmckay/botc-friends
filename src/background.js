@@ -16,24 +16,34 @@ const demoLists = [
   {
     name: "Friends",
     color: {
-      r: '46',
-      g: '125',
-      b: '50',
-      a: '1'
+      r: 46,
+      g: 125,
+      b: 50,
+      a: 1
     },
     users: []
   },
   {
     name: "Block",
     color: {
-      r: '189',
-      g: '40',
-      b: '40',
-      a: '1'
+      r: 189,
+      g: 40,
+      b: 40,
+      a: 1
     },
     users: []
   },
 ]
+
+const initStorageData = {
+  _meta: {
+    version: 1
+  },
+  timestamp: 0,
+  preferences: {},
+  token: null,
+  lists: demoLists
+}
 
 function injectCSS() {
   let style = document.querySelector("style#botc-friends-style");
@@ -63,6 +73,20 @@ function injectCSS() {
     `;
   });
   style.textContent = styleText;
+}
+
+function migrateStoredData(oldData) {
+  let newData = oldData;
+  if (Array.isArray(oldData)) {
+    // Old, pre-versioned data format
+    newData = {
+      ...initStorageData,
+      lists: oldData,
+      timestamp: Date.now()
+    };
+  }
+
+  return newData;
 }
 
 function updateLists() {

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleEditing, setChangesPending } from '../state/settings/settingsSlice';
 import { Validator } from 'jsonschema';
-import { listsJsonSchema, saveListsToStorage, fetchListsFromStorage, importLists } from '../state/lists/listSlice';
+import schemaV1 from '../state/data/schemas/v1.js';
+import { saveListsToStorage, fetchListsFromStorage, importLists } from '../state/lists/listSlice';
 import ReactModal from 'react-modal';
 import ImportInput from './ImportInput';
 import ExportModal from "./ExportModal";
@@ -107,7 +108,7 @@ export default function Header() {
 
               // Validate against schema
               const validator = new Validator();
-              const validationResult = validator.validate(jsonData, listsJsonSchema);
+              const validationResult = validator.validate(jsonData, schemaV1);
               if (!validationResult.valid) {
                 console.log('Validation errors:', validationResult.errors);
                 throw new Error('JSON data does not match required schema: ' + validationResult.errors.map(e => e.stack).join(', '));
