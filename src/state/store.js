@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit"
+import { combineReducers, configureStore } from "@reduxjs/toolkit"
 import listReducer from "./lists/listSlice.js"
 import settingsReducer from "./settings/settingsSlice.js"
 
@@ -39,16 +39,14 @@ const demoLists = [
   },
 ]
 
-export const store = configureStore({
-  reducer: {
-    lists: listReducer,
-    settings: settingsReducer
-  },
-  preloadedState: {
-    lists: demoLists,
-    settings: {
-      editing: false,
-      includeSpectators: false,
-    }
-  }
+const rootReducer = combineReducers({
+  lists: listReducer,
+  settings: settingsReducer
 })
+
+export const setupStore = (preloadedState) => {
+  return configureStore({
+    reducer: rootReducer,
+    preloadedState
+  })
+}

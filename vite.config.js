@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { playwright } from '@vitest/browser-playwright'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -23,6 +24,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1600,
     outDir: 'build',
+    minify: false,
     rollupOptions: {
       input: {
         main: './index.html',
@@ -34,6 +36,17 @@ export default defineConfig({
         },
       },
     },
+  },
+  test: {
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [
+        { browser: 'chromium' },
+      ],
+    },
+    setupFiles: './vitest.init.js'
   },
   server: {
     host: '127.0.0.1',
