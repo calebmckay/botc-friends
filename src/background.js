@@ -351,7 +351,6 @@ function grimoireObserverCallback(mutationList, observer) {
 function appObserverCallback(mutationList, observer) {
   mutationList.forEach(mutation => {
     if (mutation.type === 'childList') {
-
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.id === 'grimoire') {
           createGrimoireObserver(node);
