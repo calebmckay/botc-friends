@@ -244,9 +244,10 @@ function highlightAllLobbies() {
 const handleListSelectorChange = (e) => {
   const selectElement = e.currentTarget;
   const userIdLi = selectElement.parentElement;
-  const userId = parseInt(userIdLi.childNodes[1].textContent.trim());
+  const userId = parseInt(Array.from(userIdLi.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)[0].textContent.trim());
   const username = userIdLi.closest('div.user').querySelector('div.nameplate > div.name').textContent.trim();
 
+  const defaultOption = selectElement.querySelector('option[value=""]');
   const selectedOption = selectElement.value;
   const user = { id: userId, name: username };
 
@@ -255,14 +256,18 @@ const handleListSelectorChange = (e) => {
     lists.forEach(list => {
       list.users = list.users.filter(u => u.id !== userId);
     });
+    defaultOption.textContent = "Add to list...";
   } else {
     lists.forEach((list, index) => {
-      if (index === parseInt(selectedOption) && !list.users.find(u => u.id === userId)) {
+      const selectedIndex = parseInt(selectedOption);
+      const userInList = list.users.find(u => u.id === userId);
+      if (index === selectedIndex && !userInList) {
         lists[index].users.push(user);
-      } else if (index !== parseInt(selectedOption) && list.users.find(u => u.id === userId)) {
+      } else if (index !== selectedIndex && userInList) {
         lists[index].users = list.users.filter(u => u.id !== userId);
       }
     });
+    defaultOption.textContent = "(remove from list)";
   }
   // Update storage and mappings
   localStorage.setItem('botc-friends', JSON.stringify(lists));
@@ -270,7 +275,30 @@ const handleListSelectorChange = (e) => {
   highlightAllLobbies();
 }
 
+function waitForElementToHaveContent(element) {
+  return new Promise(resolve => {
+    // If the element already has content, resolve immediately
+    if (element && element.textContent.trim() !== '') {
+      resolve(element);
+      return;
+    }
+
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+          if (element && element.textContent.trim() !== '') {
+            observer.disconnect();
+            resolve(element);
+          }
+        }
+      });
+    });
+    observer.observe(element, { childList: true, characterData: true });
+  });
+}
+
 const insertAddToListSelector = (element) => {
+  const userId = parseInt(Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)[0].textContent.trim());
   const icon = document.createElement('img');
   icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
   icon.style.height = "28px";
@@ -292,11 +320,17 @@ const insertAddToListSelector = (element) => {
     selectElement.appendChild(option);
   });
 
+  if (Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
+    selectElement.value = userIdMap[userId];
+    defaultOption.textContent = "(remove from list)";
+  } else {
+    selectElement.value = "";
+  }
   selectElement.onchange = handleListSelectorChange;
 
   element.appendChild(selectLabel);
   element.appendChild(selectElement);
-  console.log("Inserted 'Add to list' selector for user ID:", element.childNodes[1].textContent.trim());
+  console.log("Inserted 'Add to list' selector for user ID:", userId);
 }
 
 function messageListener(message, sender, sendResponse) {
@@ -321,8 +355,11 @@ function lobbyObserverCallback(mutationList, observer) {
     if (mutation.type === 'childList') {
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.matches('div.user')) {
-          const userIdLi = node.querySelectorAll('ul.profile > li')[0];
-          insertAddToListSelector(userIdLi);
+          const userIdLi = node.querySelector('ul.profile > li');
+          const userIdSpan = Array.from(userIdLi.childNodes).filter(n => n.nodeType === Node.TEXT_NODE)[0];
+          waitForElementToHaveContent(userIdSpan).then(() => {
+            insertAddToListSelector(userIdLi);
+          });
         }
       });
       Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
@@ -340,8 +377,11 @@ function grimoireObserverCallback(mutationList, observer) {
     if (mutation.type === 'childList') {
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.matches('div.user')) {
-          const userIdLi = node.querySelectorAll('ul.profile > li')[0];
-          insertAddToListSelector(userIdLi);
+          const userIdLi = node.querySelector('ul.profile > li');
+          const userIdSpan = Array.from(userIdLi.childNodes).filter(n => n.nodeType === Node.TEXT_NODE)[0];
+          waitForElementToHaveContent(userIdSpan).then(() => {
+            insertAddToListSelector(userIdLi);
+          });
         }
       });
     }
