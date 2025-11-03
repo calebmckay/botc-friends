@@ -110,7 +110,7 @@ function updateLists() {
     return;
   }
   try {
-    storedData = JSON.parse(localData);
+    storedData = migrateStoredData(JSON.parse(localData));
   } catch (e) {
     console.error("Failed to parse stored data:", e);
     return;
@@ -311,6 +311,7 @@ const handleListSelectorChange = (e) => {
     defaultOption.textContent = "(remove from list)";
   }
   // Update storage and mappings
+  storedData.timestamp = Date.now();
   localStorage.setItem('botc-friends', JSON.stringify(storedData));
   updateLists();
   highlightAllLobbies();
@@ -393,6 +394,8 @@ function messageListener(message, sender, sendResponse) {
     case 'syncStorage':
       sendResponse({ success: true, data: storedData });
       syncStoredData(migrateStoredData(message.data));
+      updateLists();
+      highlightAllLobbies();
       break;
     // case 'saveLists':
     //   localStorage.setItem('botc-friends', JSON.stringify(message.lists));
