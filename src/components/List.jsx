@@ -17,7 +17,7 @@ import {
 
 import ListItem from './ListItem';
 import UserInput from './UserInput';
-import { addUser, deleteList, moveListDown, moveListUp, updateList } from '../state/lists/listSlice';
+import { addUser, deleteList, moveListDown, moveListUp, updateList } from '../state/data/dataSlice';
 import { setChangesPending } from '../state/settings/settingsSlice';
 
 const List = ({ ref, listIndex, list }) => {

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toggleEditing, setChangesPending } from '../state/settings/settingsSlice';
 import { Validator } from 'jsonschema';
 import schemaV1 from '../state/data/schemas/v1.js';
-import { saveListsToStorage, fetchListsFromStorage, importLists } from '../state/lists/listSlice';
+import { saveListsToStorage, syncStorage, importLists } from '../state/data/data';
 import ReactModal from 'react-modal';
 import ImportInput from './ImportInput';
 import ExportModal from "./ExportModal";
@@ -60,7 +60,7 @@ export default function Header() {
             onClick={() => {
               if (changesPending) {
                 if (confirm('Are you sure you want to cancel your changes? All unsaved changes will be lost.')) {
-                  dispatch(fetchListsFromStorage())
+                  dispatch(syncStorage())
                   dispatch(setChangesPending(false))
                 }
               }

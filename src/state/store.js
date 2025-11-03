@@ -1,5 +1,5 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit"
-import listReducer from "./lists/listSlice.js"
+import dataReducer from "./data/dataSlice.js"
 import settingsReducer from "./settings/settingsSlice.js"
 
 const demoLists = [
@@ -40,7 +40,7 @@ const demoLists = [
 ]
 
 const rootReducer = combineReducers({
-  lists: listReducer,
+  data: dataReducer,
   settings: settingsReducer
 })
 

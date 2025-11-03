@@ -4,7 +4,7 @@ import Footer from './components/Footer'
 import List from './components/List'
 
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchListsFromStorage, createList } from './state/lists/listSlice';
+import { syncStorage, createList } from './state/data/dataSlice';
 import { setChangesPending } from './state/settings/settingsSlice';
 import { useEffect } from 'react';
 
@@ -17,7 +17,7 @@ function App() {
   const lists = useSelector((state) => state.lists);
 
   useEffect(() => {
-    dispatch(fetchListsFromStorage())
+    dispatch(syncStorage())
   }, [dispatch]);
 
   return (
