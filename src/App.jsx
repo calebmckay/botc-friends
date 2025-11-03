@@ -14,7 +14,7 @@ function App() {
   const dispatch = useDispatch();
 
   const settings = useSelector((state) => state.settings);
-  const lists = useSelector((state) => state.lists);
+  const lists = useSelector((state) => state.data.lists);
 
   useEffect(() => {
     dispatch(syncStorage())
@@ -24,7 +24,7 @@ function App() {
     <main>
       <Header />
         
-        {lists.map((list, index) => (
+        {lists && lists.map((list, index) => (
           <List
             layout
             key={list.name}

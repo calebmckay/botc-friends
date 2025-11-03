@@ -16,7 +16,7 @@ export default function Header() {
   const dispatch = useDispatch();
   const isEditing = useSelector((state) => state.settings.editing);
   const changesPending = useSelector((state) => state.settings.changesPending);
-  const lists = useSelector((state) => state.lists);
+  const lists = useSelector((state) => state.data.lists);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -149,7 +149,7 @@ export default function Header() {
       >
         <ExportModal 
           onClose={() => setIsExportModalOpen(false)}
-          jsonText={JSON.stringify(useSelector((state) => state.lists))}
+          jsonText={JSON.stringify(useSelector((state) => state.data.lists))}
         />
       </ReactModal>
       

@@ -22,7 +22,7 @@ import { setChangesPending } from '../state/settings/settingsSlice';
 
 const List = ({ ref, listIndex, list }) => {
   const dispatch = useDispatch();
-  const listCount = useSelector((state) => state.lists.length);
+  const listCount = useSelector((state) => state.data.lists.length);
   const isEditing = useSelector((state) => state.settings.editing);
 
   const [isOpen, setIsOpen] = useState(false);
