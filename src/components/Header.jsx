@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toggleEditing, setChangesPending } from '../state/settings/settingsSlice';
 import { Validator } from 'jsonschema';
 import schemaV1 from '../state/data/schemas/v1.js';
-import { saveListsToStorage, syncStorage, importLists } from '../state/data/data';
+import { saveListsToStorage, syncStorage, importLists } from '../state/data/dataSlice';
 import ReactModal from 'react-modal';
 import ImportInput from './ImportInput';
 import ExportModal from "./ExportModal";
