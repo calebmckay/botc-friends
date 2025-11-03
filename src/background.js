@@ -4,11 +4,11 @@ const ACCESS_TOKEN_EXPIRY_MS = 10 * 60 * 1000;
 
 const UNSET_PRECEDENCE = 99999999;
 
-let lists = [];
+let storedData = {};
 let userIdMap = {};
 let sessions = [];
 
-let appObserver = null;
+let _appObserver = null;
 let lobbyObserver = null;
 let grimoireObserver = null;
 
@@ -16,24 +16,34 @@ const demoLists = [
   {
     name: "Friends",
     color: {
-      r: '46',
-      g: '125',
-      b: '50',
-      a: '1'
+      r: 46,
+      g: 125,
+      b: 50,
+      a: 1
     },
     users: []
   },
   {
     name: "Block",
     color: {
-      r: '189',
-      g: '40',
-      b: '40',
-      a: '1'
+      r: 189,
+      g: 40,
+      b: 40,
+      a: 1
     },
     users: []
   },
 ]
+
+const initStorageData = {
+  _meta: {
+    version: 1
+  },
+  timestamp: 0,
+  preferences: {},
+  token: null,
+  lists: demoLists
+}
 
 function injectCSS() {
   let style = document.querySelector("style#botc-friends-style");
@@ -44,7 +54,7 @@ function injectCSS() {
   }
 
   let styleText = "";
-  lists.map((list, index) => {
+  storedData.lists.map((list, index) => {
     const color = list.color;
     // Helper to darken RGB color by a percentage
     function darkenColor(r, g, b, percent) {
@@ -65,24 +75,50 @@ function injectCSS() {
   style.textContent = styleText;
 }
 
+function migrateStoredData(oldData) {
+  let newData = oldData;
+  if (Array.isArray(oldData)) {
+    // Old, pre-versioned data format
+    newData = {
+      ...initStorageData,
+      lists: oldData,
+    };
+  }
+
+  return newData;
+}
+
+function compareData(localData, remoteData) {
+  if (!remoteData) return localData;
+  if (!localData) return remoteData;
+
+  if (localData.timestamp > remoteData.timestamp) {
+    return localData;
+  } else if (localData.timestamp < remoteData.timestamp) {
+    return remoteData;
+  } else {
+    // Default to local data for backwards compatibility
+    return localData;
+  }
+}
+
 function updateLists() {
-  const storageData = localStorage.getItem('botc-friends');
-  if (!storageData) {
-    console.error("No stored lists found");
-    localStorage.setItem('botc-friends', JSON.stringify(demoLists));
+  const localData = localStorage.getItem('botc-friends');
+  if (!localData) {
+    console.error("No stored data found - initializing with default data");
+    localStorage.setItem('botc-friends', JSON.stringify(initStorageData));
     return;
   }
   try {
-    lists = JSON.parse(storageData);
+    storedData = migrateStoredData(JSON.parse(localData));
   } catch (e) {
-    console.error("Failed to parse stored lists:", e);
+    console.error("Failed to parse stored data:", e);
     return;
   }
 
-
   // Map userId to list index for quick lookup
   userIdMap = {};
-  lists.forEach((list, index) => {
+  storedData.lists.forEach((list, index) => {
     list.users.forEach(user => {
       if (!Object.prototype.hasOwnProperty.call(userIdMap, user.id)) {
         userIdMap[user.id] = index;
@@ -258,24 +294,25 @@ const handleListSelectorChange = (e) => {
 
   if (selectedOption === "") {
     // Remove from all lists
-    lists.forEach(list => {
+    storedData.lists.forEach(list => {
       list.users = list.users.filter(u => u.id !== userId);
     });
     defaultOption.textContent = "Add to list...";
   } else {
-    lists.forEach((list, index) => {
+    storedData.lists.forEach((list, index) => {
       const selectedIndex = parseInt(selectedOption);
       const userInList = list.users.find(u => u.id === userId);
       if (index === selectedIndex && !userInList) {
-        lists[index].users.push(user);
+        storedData.lists[index].users.push(user);
       } else if (index !== selectedIndex && userInList) {
-        lists[index].users = list.users.filter(u => u.id !== userId);
+        storedData.lists[index].users = list.users.filter(u => u.id !== userId);
       }
     });
     defaultOption.textContent = "(remove from list)";
   }
   // Update storage and mappings
-  localStorage.setItem('botc-friends', JSON.stringify(lists));
+  storedData.timestamp = Date.now();
+  localStorage.setItem('botc-friends', JSON.stringify(storedData));
   updateLists();
   highlightAllLobbies();
 }
@@ -309,7 +346,6 @@ function waitForElementToHaveContent(element, timeout = 5000) {
   });
 }
 
-
 const insertAddToListSelector = (element) => {
   const userId = parseInt(getTextNode(element).textContent.trim());
   const icon = document.createElement('img');
@@ -326,7 +362,7 @@ const insertAddToListSelector = (element) => {
   defaultOption.textContent = "Add to list...";
   selectElement.appendChild(defaultOption);
 
-  lists.forEach((list, index) => {
+  storedData.lists.forEach((list, index) => {
     const option = document.createElement('option');
     option.value = index;
     option.textContent = list.name;
@@ -345,16 +381,25 @@ const insertAddToListSelector = (element) => {
   element.appendChild(selectElement);
 }
 
+function syncStoredData(remoteData) {
+  const localData = migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
+  let syncedData = compareData(localData, remoteData);
+  // Fall back to initial data if both are null/invalid
+  if (syncedData == null) {
+    syncedData = initStorageData;
+  }
+  localStorage.setItem("botc-friends", JSON.stringify(syncedData));
+  return syncedData;
+}
+
 function messageListener(message, sender, sendResponse) {
   console.log("Background received message:", message);
   switch (message.type) {
-    case 'getLists':
-      sendResponse({ success: true, lists });
-      break;
-    case 'saveLists':
-      localStorage.setItem('botc-friends', JSON.stringify(message.lists));
+    case 'syncStorage':
+      sendResponse({ success: true, data: storedData });
+      syncStoredData(migrateStoredData(message.data));
       updateLists();
-      sendResponse({ success: true });
+      highlightAllLobbies();
       break;
     default:
       console.warn('Unknown message type:', message.type);
@@ -464,7 +509,7 @@ function initialize() {
   updateLists();
   chrome.runtime.onMessage.addListener(messageListener);
 
-  appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  _appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
   if (document.URL.includes("/play")) {
     createGrimoireObserver(document.getElementById("grimoire"));
   } else {

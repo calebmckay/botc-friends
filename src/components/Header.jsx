@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleEditing, setChangesPending } from '../state/settings/settingsSlice';
 import { Validator } from 'jsonschema';
-import { listsJsonSchema, saveListsToStorage, fetchListsFromStorage, importLists } from '../state/lists/listSlice';
+import schemaV1 from '../state/data/schemas/v1.js';
+import { saveListsToStorage, syncStorage, importLists } from '../state/data/dataSlice';
 import ReactModal from 'react-modal';
 import ImportInput from './ImportInput';
 import ExportModal from "./ExportModal";
@@ -15,7 +16,7 @@ export default function Header() {
   const dispatch = useDispatch();
   const isEditing = useSelector((state) => state.settings.editing);
   const changesPending = useSelector((state) => state.settings.changesPending);
-  const lists = useSelector((state) => state.lists);
+  const lists = useSelector((state) => state.data?.lists);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -59,7 +60,7 @@ export default function Header() {
             onClick={() => {
               if (changesPending) {
                 if (confirm('Are you sure you want to cancel your changes? All unsaved changes will be lost.')) {
-                  dispatch(fetchListsFromStorage())
+                  dispatch(syncStorage())
                   dispatch(setChangesPending(false))
                 }
               }
@@ -107,7 +108,7 @@ export default function Header() {
 
               // Validate against schema
               const validator = new Validator();
-              const validationResult = validator.validate(jsonData, listsJsonSchema);
+              const validationResult = validator.validate(jsonData, schemaV1.lists);
               if (!validationResult.valid) {
                 console.log('Validation errors:', validationResult.errors);
                 throw new Error('JSON data does not match required schema: ' + validationResult.errors.map(e => e.stack).join(', '));
@@ -148,7 +149,7 @@ export default function Header() {
       >
         <ExportModal 
           onClose={() => setIsExportModalOpen(false)}
-          jsonText={JSON.stringify(useSelector((state) => state.lists))}
+          jsonText={JSON.stringify(useSelector((state) => state.data?.lists))}
         />
       </ReactModal>
       
