@@ -1,12 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import schemaV1 from "./schemas/v1.js";
-
 const getRandomInt = (max) => {
   return Math.floor(Math.random() * max);
 }
 
-const demoLists = [
+const _demoLists = [
   {
     name: "Friends",
     color: {

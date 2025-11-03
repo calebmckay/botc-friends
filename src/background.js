@@ -8,7 +8,7 @@ let storedData = {};
 let userIdMap = {};
 let sessions = [];
 
-let appObserver = null;
+let _appObserver = null;
 let lobbyObserver = null;
 let grimoireObserver = null;
 
@@ -383,7 +383,11 @@ const insertAddToListSelector = (element) => {
 
 function syncStoredData(remoteData) {
   const localData = migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
-  const syncedData = compareData(localData, remoteData);
+  let syncedData = compareData(localData, remoteData);
+  // Fall back to initial data if both are null/invalid
+  if (syncedData == null) {
+    syncedData = initStorageData;
+  }
   localStorage.setItem("botc-friends", JSON.stringify(syncedData));
   return syncedData;
 }
@@ -397,11 +401,6 @@ function messageListener(message, sender, sendResponse) {
       updateLists();
       highlightAllLobbies();
       break;
-    // case 'saveLists':
-    //   localStorage.setItem('botc-friends', JSON.stringify(message.lists));
-    //   updateLists();
-    //   sendResponse({ success: true });
-    //   break;
     default:
       console.warn('Unknown message type:', message.type);
       sendResponse({ success: false, error: 'Unknown message type' });
@@ -510,7 +509,7 @@ function initialize() {
   updateLists();
   chrome.runtime.onMessage.addListener(messageListener);
 
-  appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  _appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
   if (document.URL.includes("/play")) {
     createGrimoireObserver(document.getElementById("grimoire"));
   } else {

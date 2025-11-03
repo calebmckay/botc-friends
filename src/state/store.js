@@ -2,43 +2,6 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit"
 import dataReducer from "./data/dataSlice.js"
 import settingsReducer from "./settings/settingsSlice.js"
 
-const demoLists = [
-  {
-    name: "Friends",
-    color: {
-      r: '46',
-      g: '125',
-      b: '50',
-      a: '1'
-    },
-    users: [
-      {
-        id: 8274423742618,
-        name: "spellbee"
-      },
-      {
-        id: 8330200514714,
-        name: "Bones" 
-      }
-    ]
-  },
-  {
-    name: "Block",
-    color: {
-      r: '189',
-      g: '40',
-      b: '40',
-      a: '1'
-    },
-    users: [
-      {
-        id: 8274374230170,
-        name: "Bearface"
-      },
-    ]
-  },
-]
-
 const rootReducer = combineReducers({
   data: dataReducer,
   settings: settingsReducer

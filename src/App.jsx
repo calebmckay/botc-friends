@@ -14,7 +14,7 @@ function App() {
   const dispatch = useDispatch();
 
   const settings = useSelector((state) => state.settings);
-  const lists = useSelector((state) => state.data.lists);
+  const lists = useSelector((state) => state.data?.lists);
 
   useEffect(() => {
     dispatch(syncStorage())
