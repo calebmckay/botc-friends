@@ -4,7 +4,7 @@ import Footer from './components/Footer'
 import List from './components/List'
 
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchListsFromStorage, createList } from './state/lists/listSlice';
+import { syncStorage, createList } from './state/data/dataSlice';
 import { setChangesPending } from './state/settings/settingsSlice';
 import { useEffect } from 'react';
 
@@ -14,17 +14,17 @@ function App() {
   const dispatch = useDispatch();
 
   const settings = useSelector((state) => state.settings);
-  const lists = useSelector((state) => state.lists);
+  const lists = useSelector((state) => state.data?.lists);
 
   useEffect(() => {
-    dispatch(fetchListsFromStorage())
+    dispatch(syncStorage())
   }, [dispatch]);
 
   return (
     <main>
       <Header />
         
-        {lists.map((list, index) => (
+        {lists && lists.map((list, index) => (
           <List
             layout
             key={list.name}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { editUser, removeUser } from '../state/lists/listSlice';
+import { editUser, removeUser } from '../state/data/dataSlice';
 import { setChangesPending } from '../state/settings/settingsSlice';
 import ReactModal from 'react-modal';
 import UserInput from './UserInput';

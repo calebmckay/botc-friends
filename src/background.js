@@ -4,32 +4,46 @@ const ACCESS_TOKEN_EXPIRY_MS = 10 * 60 * 1000;
 
 const UNSET_PRECEDENCE = 99999999;
 
-let lists = [];
+let storedData = {};
 let userIdMap = {};
 let sessions = [];
+
+let _appObserver = null;
+let lobbyObserver = null;
+let grimoireObserver = null;
 
 const demoLists = [
   {
     name: "Friends",
     color: {
-      r: '46',
-      g: '125',
-      b: '50',
-      a: '1'
+      r: 46,
+      g: 125,
+      b: 50,
+      a: 1
     },
     users: []
   },
   {
     name: "Block",
     color: {
-      r: '189',
-      g: '40',
-      b: '40',
-      a: '1'
+      r: 189,
+      g: 40,
+      b: 40,
+      a: 1
     },
     users: []
   },
 ]
+
+const initStorageData = {
+  _meta: {
+    version: 1
+  },
+  timestamp: 0,
+  preferences: {},
+  token: null,
+  lists: demoLists
+}
 
 function injectCSS() {
   let style = document.querySelector("style#botc-friends-style");
@@ -40,7 +54,7 @@ function injectCSS() {
   }
 
   let styleText = "";
-  lists.map((list, index) => {
+  storedData.lists.map((list, index) => {
     const color = list.color;
     // Helper to darken RGB color by a percentage
     function darkenColor(r, g, b, percent) {
@@ -61,24 +75,50 @@ function injectCSS() {
   style.textContent = styleText;
 }
 
+function migrateStoredData(oldData) {
+  let newData = oldData;
+  if (Array.isArray(oldData)) {
+    // Old, pre-versioned data format
+    newData = {
+      ...initStorageData,
+      lists: oldData,
+    };
+  }
+
+  return newData;
+}
+
+function compareData(localData, remoteData) {
+  if (!remoteData) return localData;
+  if (!localData) return remoteData;
+
+  if (localData.timestamp > remoteData.timestamp) {
+    return localData;
+  } else if (localData.timestamp < remoteData.timestamp) {
+    return remoteData;
+  } else {
+    // Default to local data for backwards compatibility
+    return localData;
+  }
+}
+
 function updateLists() {
-  const storageData = localStorage.getItem('botc-friends');
-  if (!storageData) {
-    console.error("No stored lists found");
-    localStorage.setItem('botc-friends', JSON.stringify(demoLists));
+  const localData = localStorage.getItem('botc-friends');
+  if (!localData) {
+    console.error("No stored data found - initializing with default data");
+    localStorage.setItem('botc-friends', JSON.stringify(initStorageData));
     return;
   }
   try {
-    lists = JSON.parse(storageData);
+    storedData = migrateStoredData(JSON.parse(localData));
   } catch (e) {
-    console.error("Failed to parse stored lists:", e);
+    console.error("Failed to parse stored data:", e);
     return;
   }
 
-
   // Map userId to list index for quick lookup
   userIdMap = {};
-  lists.forEach((list, index) => {
+  storedData.lists.forEach((list, index) => {
     list.users.forEach(user => {
       if (!Object.prototype.hasOwnProperty.call(userIdMap, user.id)) {
         userIdMap[user.id] = index;
@@ -237,39 +277,129 @@ function highlightAllLobbies() {
   });
 }
 
-const updateObserver = new MutationObserver((mutationList) => {
-  mutationList.forEach(mutation => {
-    if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
-      mutation.removedNodes.forEach(node => {
-        if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.loader')) {
-          // The page just fetched the session list, so we should fetch it as well
-          fetchSessions();
+const getTextNode = (element) => {
+  return Array.from(element.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+}
+
+
+const handleListSelectorChange = (e) => {
+  const selectElement = e.currentTarget;
+  const userIdLi = selectElement.parentElement;
+  const userId = parseInt(getTextNode(userIdLi).textContent.trim());
+  const username = userIdLi.closest('div.user').querySelector('div.nameplate > div.name').textContent.trim();
+
+  const defaultOption = selectElement.querySelector('option[value=""]');
+  const selectedOption = selectElement.value;
+  const user = { id: userId, name: username };
+
+  if (selectedOption === "") {
+    // Remove from all lists
+    storedData.lists.forEach(list => {
+      list.users = list.users.filter(u => u.id !== userId);
+    });
+    defaultOption.textContent = "Add to list...";
+  } else {
+    storedData.lists.forEach((list, index) => {
+      const selectedIndex = parseInt(selectedOption);
+      const userInList = list.users.find(u => u.id === userId);
+      if (index === selectedIndex && !userInList) {
+        storedData.lists[index].users.push(user);
+      } else if (index !== selectedIndex && userInList) {
+        storedData.lists[index].users = list.users.filter(u => u.id !== userId);
+      }
+    });
+    defaultOption.textContent = "(remove from list)";
+  }
+  // Update storage and mappings
+  storedData.timestamp = Date.now();
+  localStorage.setItem('botc-friends', JSON.stringify(storedData));
+  updateLists();
+  highlightAllLobbies();
+}
+
+function waitForElementToHaveContent(element, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    // If the element already has content, resolve immediately
+    if (element && element.textContent.trim() !== '') {
+      resolve(element);
+      return;
+    }
+
+    // Set up a timeout to reject the promise if it takes too long
+    const timer = setTimeout(() => {
+      observer.disconnect();
+      reject(new Error('Timeout waiting for element to have content'));
+    }, timeout);
+
+    const observer = new MutationObserver((mutationList, observer) => {
+      mutationList.forEach(mutation => {
+        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+          if (element && element.textContent.trim() !== '') {
+            observer.disconnect();
+            clearTimeout(timer);
+            resolve(element);
+          }
         }
       });
-    }
+    });
+    observer.observe(element, { childList: true, characterData: true });
   });
-});
+}
 
-function waitForElement(selector, callback) {
-  const interval = setInterval(() => {
-    const element = document.querySelector(selector);
-    if (element) {
-      clearInterval(interval);
-      callback(element);
-    }
-  }, 100); // Check every 100ms
+const insertAddToListSelector = (element) => {
+  const userId = parseInt(getTextNode(element).textContent.trim());
+  const icon = document.createElement('img');
+  icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
+  icon.style.height = "28px";
+  icon.style.paddingLeft = "20px";
+
+  const selectLabel = document.createElement('label');
+  selectLabel.appendChild(icon);
+
+  const selectElement = document.createElement('select');
+  const defaultOption = document.createElement('option');
+  defaultOption.value = "";
+  defaultOption.textContent = "Add to list...";
+  selectElement.appendChild(defaultOption);
+
+  storedData.lists.forEach((list, index) => {
+    const option = document.createElement('option');
+    option.value = index;
+    option.textContent = list.name;
+    selectElement.appendChild(option);
+  });
+
+  if (Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
+    selectElement.value = userIdMap[userId];
+    defaultOption.textContent = "(remove from list)";
+  } else {
+    selectElement.value = "";
+  }
+  selectElement.onchange = handleListSelectorChange;
+
+  element.appendChild(selectLabel);
+  element.appendChild(selectElement);
+}
+
+function syncStoredData(remoteData) {
+  const localData = migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
+  let syncedData = compareData(localData, remoteData);
+  // Fall back to initial data if both are null/invalid
+  if (syncedData == null) {
+    syncedData = initStorageData;
+  }
+  localStorage.setItem("botc-friends", JSON.stringify(syncedData));
+  return syncedData;
 }
 
 function messageListener(message, sender, sendResponse) {
   console.log("Background received message:", message);
   switch (message.type) {
-    case 'getLists':
-      sendResponse({ success: true, lists });
-      break;
-    case 'saveLists':
-      localStorage.setItem('botc-friends', JSON.stringify(message.lists));
+    case 'syncStorage':
+      sendResponse({ success: true, data: storedData });
+      syncStoredData(migrateStoredData(message.data));
       updateLists();
-      sendResponse({ success: true });
+      highlightAllLobbies();
       break;
     default:
       console.warn('Unknown message type:', message.type);
@@ -277,17 +407,115 @@ function messageListener(message, sender, sendResponse) {
   }
 }
 
-function initialize() {
-  waitForElement("table.list > tbody", () => {
-    updateLists();
-    fetchSessions().then(() => highlightAllLobbies());
-
-    document.querySelector("div#lobby").addEventListener('click', () => {
-      highlightAllLobbies();
-    });
-    updateObserver.observe(document.querySelector("section.list"), { childList: true });
+function lobbyObserverCallback(mutationList, observer) {
+  mutationList.forEach(mutation => {
+    if (mutation.type === 'childList') {
+      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.matches('div.user')) {
+          const userIdLi = node.querySelector('ul.profile > li');
+          const userIdText = getTextNode(userIdLi);
+          if (!userIdText) return;
+          waitForElementToHaveContent(userIdText).then(() => {
+            insertAddToListSelector(userIdLi);
+          });
+        }
+      });
+      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.matches('div.loader')) {
+          // The page just fetched the session list, so we should fetch it as well
+          fetchSessions();
+        }
+      });
+    }
   });
+}
+
+function grimoireObserverCallback(mutationList, observer) {
+  mutationList.forEach(mutation => {
+    if (mutation.type === 'childList') {
+      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.matches('div.user')) {
+          const userIdLi = node.querySelector('ul.profile > li');
+          const userIdText = getTextNode(userIdLi);
+          if (!userIdText) return;
+          waitForElementToHaveContent(userIdText).then(() => {
+            insertAddToListSelector(userIdLi);
+          });
+        }
+      });
+    }
+  });
+}
+
+function appObserverCallback(mutationList, observer) {
+  mutationList.forEach(mutation => {
+    if (mutation.type === 'childList') {
+      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.id === 'grimoire') {
+          createGrimoireObserver(node);
+        } else if (node.id === 'lobby') {
+          createLobbyObserver(node);
+        }
+      });
+      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
+        if (node.id === 'grimoire') {
+          removeGrimoireObserver();
+        } else if (node.id === 'lobby') {
+          removeLobbyObserver();
+        }
+      });
+    }
+  });
+}
+
+function createGrimoireObserver(node) {
+  if (grimoireObserver) {
+    grimoireObserver.disconnect();
+  }
+  grimoireObserver = new MutationObserver(grimoireObserverCallback);
+  grimoireObserver.observe(node, { childList: true });
+}
+
+function removeGrimoireObserver() {
+  if (grimoireObserver) {
+    grimoireObserver.disconnect();
+    grimoireObserver = null;
+  }
+}
+
+function createLobbyObserver(node) {
+  if (lobbyObserver) {
+    lobbyObserver.disconnect();
+  }
+  updateLists();
+  fetchSessions().then(() => highlightAllLobbies());
+  lobbyObserver = new MutationObserver(lobbyObserverCallback);
+  lobbyObserver.observe(node, { childList: true });
+  lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
+
+  document.getElementById("lobby").addEventListener('click', () => {
+    highlightAllLobbies();
+  });
+}
+
+function removeLobbyObserver() {
+  if (lobbyObserver) {
+    lobbyObserver.disconnect();
+    lobbyObserver = null;
+  }
+}
+
+function initialize() {
+  updateLists();
   chrome.runtime.onMessage.addListener(messageListener);
+
+  _appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  if (document.URL.includes("/play")) {
+    createGrimoireObserver(document.getElementById("grimoire"));
+  } else {
+    createLobbyObserver(document.getElementById("lobby"));
+  }
+
   console.log("BotC Friends background script loaded");
 }
 
