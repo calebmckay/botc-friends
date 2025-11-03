@@ -241,10 +241,15 @@ function highlightAllLobbies() {
   });
 }
 
+const getTextNode = (element) => {
+  return Array.from(element.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+}
+
+
 const handleListSelectorChange = (e) => {
   const selectElement = e.currentTarget;
   const userIdLi = selectElement.parentElement;
-  const userId = parseInt(Array.from(userIdLi.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)[0].textContent.trim());
+  const userId = parseInt(getTextNode(userIdLi).textContent.trim());
   const username = userIdLi.closest('div.user').querySelector('div.nameplate > div.name').textContent.trim();
 
   const defaultOption = selectElement.querySelector('option[value=""]');
@@ -275,19 +280,26 @@ const handleListSelectorChange = (e) => {
   highlightAllLobbies();
 }
 
-function waitForElementToHaveContent(element) {
-  return new Promise(resolve => {
+function waitForElementToHaveContent(element, timeout = 5000) {
+  return new Promise((resolve, reject) => {
     // If the element already has content, resolve immediately
     if (element && element.textContent.trim() !== '') {
       resolve(element);
       return;
     }
 
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
+    // Set up a timeout to reject the promise if it takes too long
+    const timer = setTimeout(() => {
+      observer.disconnect();
+      reject(new Error('Timeout waiting for element to have content'));
+    }, timeout);
+
+    const observer = new MutationObserver((mutationList, observer) => {
+      mutationList.forEach(mutation => {
         if (mutation.type === 'childList' || mutation.type === 'characterData') {
           if (element && element.textContent.trim() !== '') {
             observer.disconnect();
+            clearTimeout(timer);
             resolve(element);
           }
         }
@@ -297,8 +309,9 @@ function waitForElementToHaveContent(element) {
   });
 }
 
+
 const insertAddToListSelector = (element) => {
-  const userId = parseInt(Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)[0].textContent.trim());
+  const userId = parseInt(getTextNode(element).textContent.trim());
   const icon = document.createElement('img');
   icon.src = chrome.runtime.getURL("assets/icons/botc-friends-48.png");
   icon.style.height = "28px";
@@ -330,7 +343,6 @@ const insertAddToListSelector = (element) => {
 
   element.appendChild(selectLabel);
   element.appendChild(selectElement);
-  console.log("Inserted 'Add to list' selector for user ID:", userId);
 }
 
 function messageListener(message, sender, sendResponse) {
@@ -356,8 +368,9 @@ function lobbyObserverCallback(mutationList, observer) {
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.matches('div.user')) {
           const userIdLi = node.querySelector('ul.profile > li');
-          const userIdSpan = Array.from(userIdLi.childNodes).filter(n => n.nodeType === Node.TEXT_NODE)[0];
-          waitForElementToHaveContent(userIdSpan).then(() => {
+          const userIdText = getTextNode(userIdLi);
+          if (!userIdText) return;
+          waitForElementToHaveContent(userIdText).then(() => {
             insertAddToListSelector(userIdLi);
           });
         }
@@ -378,8 +391,9 @@ function grimoireObserverCallback(mutationList, observer) {
       Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
         if (node.matches('div.user')) {
           const userIdLi = node.querySelector('ul.profile > li');
-          const userIdSpan = Array.from(userIdLi.childNodes).filter(n => n.nodeType === Node.TEXT_NODE)[0];
-          waitForElementToHaveContent(userIdSpan).then(() => {
+          const userIdText = getTextNode(userIdLi);
+          if (!userIdText) return;
+          waitForElementToHaveContent(userIdText).then(() => {
             insertAddToListSelector(userIdLi);
           });
         }
