@@ -5,6 +5,7 @@ import List from './components/List'
 
 import { useSelector, useDispatch } from 'react-redux';
 import { syncStorage, createList } from './state/data/dataSlice';
+import { fetchSessions } from './state/sessions/sessionsSlice';
 import { setChangesPending } from './state/settings/settingsSlice';
 import { useEffect } from 'react';
 
@@ -17,7 +18,9 @@ function App() {
   const lists = useSelector((state) => state.data?.lists);
 
   useEffect(() => {
-    dispatch(syncStorage())
+    dispatch(syncStorage()).then(() => {
+      dispatch(fetchSessions())
+    });
   }, [dispatch]);
 
   return (

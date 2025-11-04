@@ -4,6 +4,7 @@ import { editUser, removeUser } from '../state/data/dataSlice';
 import { setChangesPending } from '../state/settings/settingsSlice';
 import ReactModal from 'react-modal';
 import UserInput from './UserInput';
+import UserStatus from './UserStatus';
 
 const ListItem = ({ listIndex, itemIndex, name, id }) => {
   const dispatch = useDispatch();
@@ -13,8 +14,7 @@ const ListItem = ({ listIndex, itemIndex, name, id }) => {
 
   return (
     <div className="flex ml-10">
-      <p className="flex-0 text-nowrap px-2 py-0.3">{name}</p>
-      {isEditing && <p className="flex-1 text-nowrap px-2 py-0.3">(ID: {id})</p>}
+      <UserStatus name={name} id={id} />
       {isEditing && (
         <>
           <button
