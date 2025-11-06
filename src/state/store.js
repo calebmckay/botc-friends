@@ -1,9 +1,11 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit"
 import dataReducer from "./data/dataSlice.js"
+import sessionReducer from "./sessions/sessionsSlice.js"
 import settingsReducer from "./settings/settingsSlice.js"
 
 const rootReducer = combineReducers({
   data: dataReducer,
+  sessions: sessionReducer,
   settings: settingsReducer
 })
 

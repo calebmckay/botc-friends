@@ -85,6 +85,9 @@ export const syncStorage = createAsyncThunk(
     }
 
     const syncedData = compareData(localData, remoteData);
+    // Always sync token from remote if available
+    syncedData.token = remoteData?.token || localData.token;
+
     localStorage.setItem("botc-friends", JSON.stringify(syncedData));
     return syncedData;
   }
