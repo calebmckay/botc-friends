@@ -40,12 +40,13 @@ function parseSessions(sessions) {
       const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
       return { id, username };
     });
-    const spectators = game.usersAll.filter(u => !players.some(p => p.id === u.id) && !storytellers.some(st => st.id === u.id)).map(u => ({ id: parseInt(u.id), username: u.username }));
+    const spectators = game.usersAll.filter(u => !players.some(p => p.id === parseInt(u.id)) && !storytellers.some(st => st.id === parseInt(u.id))).map(u => ({ id: parseInt(u.id), username: u.username }));
     
     output.push({
       name: game.name,
       phase: game.phase,
       script: getScriptName(game.edition),
+      isRunning: game.isRunning,
       storytellers,
       players,
       spectators
@@ -59,7 +60,6 @@ export const fetchSessions = createAsyncThunk(
   async (_, { getState, dispatch }) => {
     let accessToken = getState().sessions?.accessToken;
     if (!accessToken || (Date.now() - accessToken.timestamp) > 15 * 60 * 1000) {
-      console.log(getState())
       const token = getState().data?.token;
       accessToken = await refreshAccessToken(token);
       if (accessToken && accessToken.accessToken) {

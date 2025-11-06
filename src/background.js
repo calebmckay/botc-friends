@@ -382,7 +382,10 @@ const insertAddToListSelector = (element) => {
 }
 
 function syncStoredData(remoteData) {
-  const localData = migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
+  const localData = {
+    ...migrateStoredData(JSON.parse(localStorage.getItem("botc-friends"))),
+    token: localStorage.getItem("token"),
+  };
   let syncedData = compareData(localData, remoteData);
   // Fall back to initial data if both are null/invalid
   if (syncedData == null) {

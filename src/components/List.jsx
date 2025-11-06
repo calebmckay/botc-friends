@@ -20,10 +20,17 @@ import UserInput from './UserInput';
 import { addUser, deleteList, moveListDown, moveListUp, updateList } from '../state/data/dataSlice';
 import { setChangesPending } from '../state/settings/settingsSlice';
 
+const UserRoles = {
+  STORYTELLER: "Storytelling",
+  PLAYER: "Playing",
+  SPECTATOR: "Spectating",
+}
+
 const List = ({ ref, listIndex, list }) => {
   const dispatch = useDispatch();
   const listCount = useSelector((state) => state.data.lists.length);
   const isEditing = useSelector((state) => state.settings.editing);
+  const sessions = useSelector(state => state.sessions?.sessions);
 
   const [isOpen, setIsOpen] = useState(false);
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
@@ -70,6 +77,47 @@ const List = ({ ref, listIndex, list }) => {
     }))
   }
 
+  const getUserStatus = (userId) => {
+    if (!sessions) {
+      return {
+        status: null,
+        session: null
+      };
+    }
+    for (const session of sessions) {
+      if (session.storytellers.find(user => user.id === userId)) {
+        return {
+          status: UserRoles.STORYTELLER,
+          session
+        };
+      }
+      if (session.players.find(user => user.id === userId)) {
+        return {
+          status: UserRoles.PLAYER,
+          session
+        };
+      }
+      if (session.spectators.find(user => user.id === userId)) {
+        return {
+          status: UserRoles.SPECTATOR,
+          session
+        };
+      }
+    }
+    return {
+      status: null,
+      session: null
+    }
+  }
+
+  const sortPlayerList = (a, b) => {
+    if (getUserStatus(a.id).status !== getUserStatus(b.id).status) {
+      const roleOrder = [UserRoles.STORYTELLER, UserRoles.PLAYER, UserRoles.SPECTATOR, null];
+      return roleOrder.indexOf(getUserStatus(a.id).status) - roleOrder.indexOf(getUserStatus(b.id).status);
+    }
+    return a.name.localeCompare(b.name);
+  }
+
   const styles = reactCSS({
     default: {
       color: {
@@ -78,13 +126,16 @@ const List = ({ ref, listIndex, list }) => {
     },
   });
 
+  const onlineUsers = list.users.filter(user => getUserStatus(user.id).status !== null);
+  const offlineUsers = list.users.filter(user => getUserStatus(user.id).status === null);
+
   return (
     <div ref={ref}>
       <div className="p-2 flex justify-start content-center items-center relative">
         <FontAwesomeIcon className="m-1" onClick={toggleOpen} icon={isOpen ? faChevronDown : faChevronRight} />
         {isEditing ?
-          <input type="text" className="flex-none border-b-1 border-b-white my-1 py-1" value={tempListName} size={list.name.length} onChange={handleListNameChange} onBlur={handleListNameBlur}/> :
-          <p className="flex-0 text-nowrap" onClick={toggleOpen}>{tempListName}</p>
+          <input type="text" className="flex-none border-b-1 border-b-white my-1 py-1 font-bold text-xl" value={tempListName} size={list.name.length} onChange={handleListNameChange} onBlur={handleListNameBlur}/> :
+          <p className="flex-0 text-nowrap font-bold text-xl" onClick={toggleOpen}>{tempListName}</p>
         }
         <div className="grow" />
         { isEditing && (
@@ -148,9 +199,20 @@ const List = ({ ref, listIndex, list }) => {
         }
         
       </div>
-      <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        {list.users.map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} {...item} />)}
-      </div>
+      {isEditing ? (
+        <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+          {list.users.toSorted((a, b) => a.name.localeCompare(b.name)).map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} userStatus={getUserStatus(item.id)} {...item} />)}
+        </div>
+      ) : (
+        <>
+          <div className={`transition-all duration-400 ease-in-out max-h-screen opacity-100`}>
+            {onlineUsers.toSorted(sortPlayerList).map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} userStatus={getUserStatus(item.id)} {...item} />)}
+          </div>
+          <div className={`transition-all duration-400 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+            {offlineUsers.toSorted(sortPlayerList).map((item, index) => <ListItem key={item.name} listIndex={listIndex} itemIndex={index} userStatus={getUserStatus(item.id)} {...item} />)}
+          </div>
+        </>
+      )}
 
       <ReactModal
         isOpen={isModalOpen}

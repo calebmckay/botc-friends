@@ -21,6 +21,12 @@ function App() {
     dispatch(syncStorage()).then(() => {
       dispatch(fetchSessions())
     });
+
+    const timerId = setInterval(() => {
+      dispatch(fetchSessions())
+    }, 15000);
+
+    return () => clearInterval(timerId);
   }, [dispatch]);
 
   return (
