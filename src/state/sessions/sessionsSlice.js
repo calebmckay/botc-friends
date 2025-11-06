@@ -105,7 +105,7 @@ const sessionsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchSessions.fulfilled, (state, action) => {
-        return action.payload;
+        return { ...state, ...action.payload };
       });
   }
 });

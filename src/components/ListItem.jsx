@@ -48,7 +48,9 @@ const ListItem = ({ listIndex, itemIndex, name, id, userStatus }) => {
     <div className="flex ml-10">
       <div className="flex flex-col w-full">
         <div className="flex flex-row justify-between items-center">
-          <div className={`flex-0 text-nowrap px-2 py-0.3 cursor-pointer hover:underline ${userStatus.status ? "text-base font-semibold" : "text-sm font-light opacity-40"}`} onClick={() => setIsExpanded(!isExpanded)}><FontAwesomeIcon icon={faIcon()} /><span className="pl-1">{name}</span>
+          <div className={`flex-0 text-nowrap px-2 py-0.3 cursor-pointer hover:underline ${userStatus.status ? "text-base font-semibold" : "text-sm font-light opacity-40"}`} onClick={() => setIsExpanded(!isExpanded)}>
+            {faIcon() && <FontAwesomeIcon icon={faIcon()} />}
+            <span className="pl-1">{name}</span>
             {isEditing && <span className="flex-0 text-nowrap px-2 py-0.3">(ID: {id})</span>}
             {!isEditing && userStatus.status && <span className="text-nowrap px-0 font-thin"> - {userStatus.session.name}</span>}
           </div>

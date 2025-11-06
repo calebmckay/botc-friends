@@ -110,10 +110,18 @@ const List = ({ ref, listIndex, list }) => {
     }
   }
 
+  // Cache user statuses for sorting
+  const userStatusMap = {};
+  list.users.forEach(user => {
+    userStatusMap[user.id] = getUserStatus(user.id);
+  });
+
   const sortPlayerList = (a, b) => {
-    if (getUserStatus(a.id).status !== getUserStatus(b.id).status) {
+    const aStatus = userStatusMap[a.id]?.status;
+    const bStatus = userStatusMap[b.id]?.status;
+    if (aStatus !== bStatus) {
       const roleOrder = [UserRoles.STORYTELLER, UserRoles.PLAYER, UserRoles.SPECTATOR, null];
-      return roleOrder.indexOf(getUserStatus(a.id).status) - roleOrder.indexOf(getUserStatus(b.id).status);
+      return roleOrder.indexOf(aStatus) - roleOrder.indexOf(bStatus);
     }
     return a.name.localeCompare(b.name);
   }
