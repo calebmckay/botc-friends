@@ -108,7 +108,7 @@ export default function Header() {
 
               // Validate against schema
               const validator = new Validator();
-              const validationResult = validator.validate(jsonData, schemaV1.lists);
+              const validationResult = validator.validate(jsonData, schemaV1.properties.lists);
               if (!validationResult.valid) {
                 console.log('Validation errors:', validationResult.errors);
                 throw new Error('JSON data does not match required schema: ' + validationResult.errors.map(e => e.stack).join(', '));

@@ -5,10 +5,13 @@ import List from './components/List'
 
 import { useSelector, useDispatch } from 'react-redux';
 import { syncStorage, createList } from './state/data/dataSlice';
+import { fetchSessions } from './state/sessions/sessionsSlice';
 import { setChangesPending } from './state/settings/settingsSlice';
 import { useEffect } from 'react';
 
 ReactModal.defaultStyles.content.backgroundColor = 'var(--color-gray-700)';
+
+const SESSION_FETCH_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 function App() {
   const dispatch = useDispatch();
@@ -17,7 +20,15 @@ function App() {
   const lists = useSelector((state) => state.data?.lists);
 
   useEffect(() => {
-    dispatch(syncStorage())
+    dispatch(syncStorage()).then(() => {
+      dispatch(fetchSessions())
+    });
+
+    const timerId = setInterval(() => {
+      dispatch(fetchSessions())
+    }, SESSION_FETCH_INTERVAL_MS);
+
+    return () => clearInterval(timerId);
   }, [dispatch]);
 
   return (

@@ -388,6 +388,9 @@ function syncStoredData(remoteData) {
   if (syncedData == null) {
     syncedData = initStorageData;
   }
+  // Insert token regardless of which data was chosen
+  syncedData.token = localStorage.getItem("token");
+
   localStorage.setItem("botc-friends", JSON.stringify(syncedData));
   return syncedData;
 }
