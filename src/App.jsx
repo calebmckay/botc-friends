@@ -11,6 +11,8 @@ import { useEffect } from 'react';
 
 ReactModal.defaultStyles.content.backgroundColor = 'var(--color-gray-700)';
 
+const SESSION_FETCH_INTERVAL_MS = 15 * 1000; // 15 seconds
+
 function App() {
   const dispatch = useDispatch();
 
@@ -24,7 +26,7 @@ function App() {
 
     const timerId = setInterval(() => {
       dispatch(fetchSessions())
-    }, 15000);
+    }, SESSION_FETCH_INTERVAL_MS);
 
     return () => clearInterval(timerId);
   }, [dispatch]);

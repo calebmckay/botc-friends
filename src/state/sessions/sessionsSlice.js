@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+const ACCESS_TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
+
 async function refreshAccessToken(token) {
   console.log('Refreshing access token...', token);
   const tokenResp = await fetch('https://botc.app/backend/token', {
@@ -59,7 +61,7 @@ export const fetchSessions = createAsyncThunk(
   'sessions/fetchSessions',
   async (_, { getState, dispatch }) => {
     let accessToken = getState().sessions?.accessToken;
-    if (!accessToken || (Date.now() - accessToken.timestamp) > 15 * 60 * 1000) {
+    if (!accessToken || (Date.now() - accessToken.timestamp) > ACCESS_TOKEN_EXPIRY_MS) {
       const token = getState().data?.token;
       accessToken = await refreshAccessToken(token);
       if (accessToken && accessToken.accessToken) {
