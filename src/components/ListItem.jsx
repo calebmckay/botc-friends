@@ -15,7 +15,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 import ReactModal from 'react-modal';
 import UserInput from './UserInput';
-import UserStatus from './UserStatus';
 
 const ListItem = ({ listIndex, itemIndex, name, id, userStatus }) => {
   const dispatch = useDispatch();
