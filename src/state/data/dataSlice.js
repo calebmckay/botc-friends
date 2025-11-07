@@ -173,16 +173,16 @@ const dataSlice = createSlice({
       const { listIndex, itemIndex, user } = action.payload;
       const list = state.lists[listIndex];
       if (list) {
-        list.users[itemIndex] = user;
         list.users = list.users.toSorted((a, b) => a.name.localeCompare(b.name));
+        list.users[itemIndex] = user;
       }
     },
     removeUser(state, action) {
       const { listIndex, itemIndex } = action.payload;
       const list = state.lists[listIndex];
       if (list) {
-        list.users = list.users.filter((user, index) => index !== itemIndex);
         list.users = list.users.toSorted((a, b) => a.name.localeCompare(b.name));
+        list.users = list.users.filter((user, index) => index !== itemIndex);
       }
     },
     moveListUp(state, action) {
