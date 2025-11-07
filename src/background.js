@@ -524,6 +524,18 @@ function initialize() {
 
 document.onreadystatechange = () => {
   if (document.readyState === "complete") {
-    initialize();
+    // Chrome runs this script before the DOM is ready, so we use a MutationObserver to wait for the #app element
+    new MutationObserver((mutationList, observer) => {
+      mutationList.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          Array.from(mutation.addedNodes).filter((node) => node.nodeType === Node.ELEMENT_NODE).forEach((node) => {
+            if (node.id === "lobby" || node.id === "grimoire") {
+              observer.disconnect();
+              initialize();
+            }
+          });
+        }
+      });
+    }).observe(document.getElementById("main"), { childList: true, subtree: true });
   }
 };
