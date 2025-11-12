@@ -75,6 +75,28 @@ function injectCSS() {
   style.textContent = styleText;
 }
 
+// Helper to persist highlight class on a row
+function persistHighlightClass(row, className, shouldHighlight) {
+  if (row._botcFriendsObserver) {
+    row._botcFriendsObserver.disconnect();
+    row._botcFriendsObserver = null;
+  }
+
+  if (!shouldHighlight) {
+    row.classList.remove(...Array.from(row.classList).filter(c => c.startsWith('botc-friends-row-')));
+    return;
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!row.classList.contains(className)) {
+      row.classList.add(className);
+    }
+  });
+
+  observer.observe(row, { attributes: true, attributeFilter: ["class"] });
+  row._botcFriendsObserver = observer;
+}
+
 function migrateStoredData(oldData) {
   let newData = oldData;
   if (Array.isArray(oldData)) {
@@ -261,13 +283,11 @@ function highlightLobby(lobbyId) {
   const p3 = highlightSpectators(detailsRow, session.spectators);
 
   const highestPrecedence = Math.min(p1, p2, p3);
-  if (highestPrecedence !== UNSET_PRECEDENCE) {
-    // Use a timeout to ensure the class is applied after any existing class changes
-    setTimeout(() => {
-      summaryRow.classList.add(`botc-friends-row-${highestPrecedence}`);
-      detailsRow.classList.add(`botc-friends-row-${highestPrecedence}`);
-    }, 1);
-  }
+    // Remove highlight if not needed
+  const shouldHighlight = highestPrecedence !== UNSET_PRECEDENCE;
+  const className = `botc-friends-row-${highestPrecedence}`;
+  persistHighlightClass(summaryRow, className, shouldHighlight);
+  persistHighlightClass(detailsRow, className, shouldHighlight);
 }
 
 function highlightAllLobbies() {
@@ -495,10 +515,6 @@ function createLobbyObserver(node) {
   lobbyObserver = new MutationObserver(lobbyObserverCallback);
   lobbyObserver.observe(node, { childList: true });
   lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
-
-  document.getElementById("lobby").addEventListener('click', () => {
-    highlightAllLobbies();
-  });
 }
 
 function removeLobbyObserver() {
