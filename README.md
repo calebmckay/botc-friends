@@ -41,6 +41,19 @@ If you don't have VS Code, you can also build the code in a Docker container:
 ## Contributors
 
 <!-- readme: contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/calebmckay">
+                    <img src="https://avatars.githubusercontent.com/u/11079725?v=4" width="100;" alt="calebmckay"/>
+                    <br />
+                    <sub><b>Caleb McKay</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: contributors -end -->
 
 *This extension is not affiliated with Blood on the Clocktower or The Pandemonium Institute. Blood on the Clocktower is a trademark of Steven Medway and The Pandemonium Institute.*
