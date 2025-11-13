@@ -38,4 +38,9 @@ If you don't have VS Code, you can also build the code in a Docker container:
    The build artifacts will be output in `build/`.
 
 
+## Contributors
+
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
+
 *This extension is not affiliated with Blood on the Clocktower or The Pandemonium Institute. Blood on the Clocktower is a trademark of Steven Medway and The Pandemonium Institute.*
