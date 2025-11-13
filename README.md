@@ -51,6 +51,13 @@ If you don't have VS Code, you can also build the code in a Docker container:
                     <sub><b>Caleb McKay</b></sub>
                 </a>
             </td>
+            <td align="center">
+                <a href="https://github.com/rumanstheddy">
+                    <img src="https://avatars.githubusercontent.com/u/43084717?v=4" width="100;" alt="rumanstheddy"/>
+                    <br />
+                    <sub><b>Sumanth Reddy</b></sub>
+                </a>
+            </td>
 		</tr>
 	<tbody>
 </table>
