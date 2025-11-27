@@ -8,9 +8,15 @@ let storedData = {};
 let userIdMap = {};
 let sessions = [];
 
-let _appObserver = null;
-let lobbyObserver = null;
-let grimoireObserver = null;
+
+import { LobbyObserver } from './LobbyObserver.js';
+import { GrimoireObserver } from './GrimoireObserver.js';
+import { AppObserver } from './AppObserver.js';
+import { Lobby } from './Lobby.js';
+
+let appObserverInstance = null;
+let lobbyObserverInstance = null;
+let grimoireObserverInstance = null;
 
 const demoLists = [
   {
@@ -430,97 +436,41 @@ function messageListener(message, sender, sendResponse) {
   }
 }
 
-function lobbyObserverCallback(mutationList, observer) {
-  mutationList.forEach(mutation => {
-    if (mutation.type === 'childList') {
-      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-        if (node.matches('div.user')) {
-          const userIdLi = node.querySelector('ul.profile > li');
-          const userIdText = getTextNode(userIdLi);
-          if (!userIdText) return;
-          waitForElementToHaveContent(userIdText).then(() => {
-            insertAddToListSelector(userIdLi);
-          });
-        }
-      });
-      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-        if (node.matches('div.loader')) {
-          // The page just fetched the session list, so we should fetch it as well
-          fetchSessions();
-        }
-      });
-    }
-  });
-}
-
-function grimoireObserverCallback(mutationList, observer) {
-  mutationList.forEach(mutation => {
-    if (mutation.type === 'childList') {
-      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-        if (node.matches('div.user')) {
-          const userIdLi = node.querySelector('ul.profile > li');
-          const userIdText = getTextNode(userIdLi);
-          if (!userIdText) return;
-          waitForElementToHaveContent(userIdText).then(() => {
-            insertAddToListSelector(userIdLi);
-          });
-        }
-      });
-    }
-  });
-}
-
-function appObserverCallback(mutationList, observer) {
-  mutationList.forEach(mutation => {
-    if (mutation.type === 'childList') {
-      Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-        if (node.id === 'grimoire') {
-          createGrimoireObserver(node);
-        } else if (node.id === 'lobby') {
-          createLobbyObserver(node);
-        }
-      });
-      Array.from(mutation.removedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-        if (node.id === 'grimoire') {
-          removeGrimoireObserver();
-        } else if (node.id === 'lobby') {
-          removeLobbyObserver();
-        }
-      });
-    }
-  });
-}
 
 function createGrimoireObserver(node) {
-  if (grimoireObserver) {
-    grimoireObserver.disconnect();
-  }
-  grimoireObserver = new MutationObserver(grimoireObserverCallback);
-  grimoireObserver.observe(node, { childList: true });
+  if (grimoireObserverInstance) grimoireObserverInstance.disconnect();
+  grimoireObserverInstance = new GrimoireObserver({
+    insertAddToListSelector,
+    getTextNode
+  });
+  grimoireObserverInstance.observe(node);
 }
 
 function removeGrimoireObserver() {
-  if (grimoireObserver) {
-    grimoireObserver.disconnect();
-    grimoireObserver = null;
+  if (grimoireObserverInstance) {
+    grimoireObserverInstance.disconnect();
+    grimoireObserverInstance = null;
   }
 }
 
 function createLobbyObserver(node) {
-  if (lobbyObserver) {
-    lobbyObserver.disconnect();
-  }
+  if (lobbyObserverInstance) lobbyObserverInstance.disconnect();
   updateLists();
   fetchSessions().then(() => highlightAllLobbies());
-  lobbyObserver = new MutationObserver(lobbyObserverCallback);
-  lobbyObserver.observe(node, { childList: true });
-  lobbyObserver.observe(node.querySelector("section.list"), { childList: true });
+  lobbyObserverInstance = new LobbyObserver({
+    updateLists,
+    fetchSessions,
+    highlightAllLobbies,
+    insertAddToListSelector,
+    getTextNode
+  });
+  lobbyObserverInstance.observe(node);
 }
 
 function removeLobbyObserver() {
-  if (lobbyObserver) {
-    lobbyObserver.disconnect();
-    lobbyObserver = null;
+  if (lobbyObserverInstance) {
+    lobbyObserverInstance.disconnect();
+    lobbyObserverInstance = null;
   }
 }
 
@@ -528,7 +478,14 @@ function initialize() {
   updateLists();
   chrome.runtime.onMessage.addListener(messageListener);
 
-  _appObserver = new MutationObserver(appObserverCallback).observe(document.getElementById("app"), { childList: true });
+  appObserverInstance = new AppObserver({
+    createGrimoireObserver,
+    createLobbyObserver,
+    removeGrimoireObserver,
+    removeLobbyObserver
+  });
+  appObserverInstance.observe(document.getElementById("app"));
+
   if (document.URL.includes("/play")) {
     createGrimoireObserver(document.getElementById("grimoire"));
   } else {
