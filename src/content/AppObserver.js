@@ -1,9 +1,13 @@
+import { GrimoireObserver } from './GrimoireObserver.js';
+import { LobbyObserver } from './LobbyObserver.js';
+import { DataManager } from './DataManager.js';
+import { SessionManager } from './SessionManager.js';
+
 export class AppObserver {
-  constructor({ createGrimoireObserver, createLobbyObserver, removeGrimoireObserver, removeLobbyObserver }) {
-    this.createGrimoireObserver = createGrimoireObserver;
-    this.createLobbyObserver = createLobbyObserver;
-    this.removeGrimoireObserver = removeGrimoireObserver;
-    this.removeLobbyObserver = removeLobbyObserver;
+  constructor() {
+    this.lobbyObserver = null;
+    this.grimoireObserver = null;
+    
     this.observer = null;
   }
 
@@ -12,6 +16,33 @@ export class AppObserver {
     this.observer = new MutationObserver(this.callback.bind(this));
     this.observer.observe(node, { childList: true });
   }
+
+  createGrimoireObserver(node) {
+    if (this.grimoireObserver) this.grimoireObserver.disconnect();
+    this.grimoireObserver = new GrimoireObserver();
+    this.grimoireObserver.observe(node);
+  }
+  
+  removeGrimoireObserver() {
+    if (this.grimoireObserver) {
+      this.grimoireObserver.disconnect();
+      this.grimoireObserver = null;
+    }
+  }
+  
+  createLobbyObserver(node) {
+    if (this.lobbyObserver) this.lobbyObserver.disconnect();
+    this.lobbyObserver = new LobbyObserver(node);
+    this.lobbyObserver.observe(node);
+  }
+  
+  removeLobbyObserver() {
+    if (this.lobbyObserver) {
+      this.lobbyObserver.disconnect();
+      this.lobbyObserver = null;
+    }
+  }
+
 
   callback(mutationList) {
     mutationList.forEach(mutation => {

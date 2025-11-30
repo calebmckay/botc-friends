@@ -6,8 +6,8 @@ import { Validator } from 'jsonschema';
 import schemaV1 from '../state/data/schemas/v1.js';
 import { saveListsToStorage, syncStorage, importLists } from '../state/data/dataSlice';
 import ReactModal from 'react-modal';
-import ImportInput from './ImportInput';
-import ExportModal from "./ExportModal";
+import ImportInput from './ImportInput.jsx';
+import ExportModal from "./ExportModal.jsx";
 import {
   faGear,
 } from "@fortawesome/free-solid-svg-icons"

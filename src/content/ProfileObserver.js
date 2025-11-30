@@ -1,6 +1,7 @@
-export class GrimoireObserver {
-  constructor() {
+export class ProfileObserver {
+  constructor(node) {
     this.observer = null;
+    this.node = node;
   }
 
   disconnect() {
@@ -10,39 +11,20 @@ export class GrimoireObserver {
     }
   }
 
-  observe(node) {
-    if (this.observer) this.observer.disconnect();
-    this.observer = new MutationObserver(this.callback.bind(this));
-    this.observer.observe(node, { childList: true });
-  }
-
-  callback(mutationList) {
-    mutationList.forEach(mutation => {
-      if (mutation.type === 'childList') {
-        Array.from(mutation.addedNodes).filter(node => node.nodeType === Node.ELEMENT_NODE).forEach(node => {
-          if (node.matches('div.user')) {
-            const userIdLi = node.querySelector('ul.profile > li');
-            const userIdText = this.getTextNode(userIdLi);
-            if (!userIdText) return;
-            this.waitForElementToHaveContent(userIdText).then(() => {
-              this.insertAddToListSelector(userIdLi);
-            });
-          }
-        });
-      }
-    });
-  }
-
   waitForElementToHaveContent(element, timeout = 5000) {
     return new Promise((resolve, reject) => {
+      // If the element already has content, resolve immediately
       if (element && element.textContent.trim() !== '') {
         resolve(element);
         return;
       }
+
+      // Set up a timeout to reject the promise if it takes too long
       const timer = setTimeout(() => {
         observer.disconnect();
         reject(new Error('Timeout waiting for element to have content'));
       }, timeout);
+
       const observer = new MutationObserver((mutationList, observer) => {
         mutationList.forEach(mutation => {
           if (mutation.type === 'childList' || mutation.type === 'characterData') {
