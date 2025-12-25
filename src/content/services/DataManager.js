@@ -137,8 +137,8 @@ export class DataManager {
   }
 
   syncStoredData(remoteData) {
-    const localData = this.migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
-    let syncedData = this.compareData(localData, remoteData);
+    const localData = DataManager.migrateStoredData(JSON.parse(localStorage.getItem("botc-friends")));
+    let syncedData = DataManager.compareData(localData, remoteData);
     // Fall back to initial data if both are null/invalid
     if (syncedData == null) {
       syncedData = initStorageData;

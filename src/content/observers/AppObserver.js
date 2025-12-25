@@ -1,7 +1,7 @@
 import { GrimoireObserver } from './GrimoireObserver.js';
 import { LobbyObserver } from './LobbyObserver.js';
-import { DataManager } from './DataManager.js';
-import { SessionManager } from './SessionManager.js';
+import { DataManager } from '../services/DataManager.js';
+import { SessionManager } from '../services/SessionManager.js';
 
 export class AppObserver {
   constructor() {
@@ -33,7 +33,6 @@ export class AppObserver {
   createLobbyObserver(node) {
     if (this.lobbyObserver) this.lobbyObserver.disconnect();
     this.lobbyObserver = new LobbyObserver(node);
-    this.lobbyObserver.observe(node);
   }
   
   removeLobbyObserver() {

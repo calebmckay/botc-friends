@@ -33,7 +33,7 @@ export class SessionManager {
   }
 
   getSession(id) {
-    return this.sessions.find(s => s.id === id)
+    return this.sessions.find(s => s.name === id)
   }
 
   async refreshAccessToken(token) {
