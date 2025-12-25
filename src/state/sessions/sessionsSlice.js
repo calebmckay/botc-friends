@@ -33,10 +33,11 @@ function parseSessions(sessions) {
   }
   const output = [];
   sessions.forEach(game => {
-    const storytellers = game.storytellers.map(st => ({
-      id: parseInt(st.id),
-      username: st.User.username
-    }));
+    const storytellers = game.storytellers.map(st => {
+      const id = parseInt(st.id)
+      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
+      return { id, username }
+    });
     const players = game.players.map(p => {
       const id = parseInt(p.id);
       const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';

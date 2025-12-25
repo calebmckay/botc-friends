@@ -197,10 +197,11 @@ async function fetchSessions() {
   const data = await resp.json();
   sessions = [];
   data.forEach(game => {
-    const storytellers = game.storytellers.map(st => ({
-      id: st.id,
-      username: st.User.username
-    }));
+    const storytellers = game.storytellers.map(st => {
+      const id = st.id;
+      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
+      return { id, username };
+    });
     const players = game.players.map(p => {
       const id = p.id;
       const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
