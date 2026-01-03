@@ -199,12 +199,12 @@ async function fetchSessions() {
   data.forEach(game => {
     const storytellers = game.storytellers.map(st => {
       const id = st.id;
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
+      const username = game.usersAll.find(u => u.id === st.id)?.username || 'Unknown';
       return { id, username };
     });
     const players = game.players.map(p => {
       const id = p.id;
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
+      const username = game.usersAll.find(u => u.id === p.id)?.username || 'Unknown';
       return { id, username };
     });
     const spectators = game.usersAll.filter(u => !players.some(p => p.id === u.id) && !storytellers.some(st => st.id === u.id)).map(u => ({ id: u.id, username: u.username }));

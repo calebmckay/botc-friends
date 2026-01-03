@@ -35,12 +35,12 @@ function parseSessions(sessions) {
   sessions.forEach(game => {
     const storytellers = game.storytellers.map(st => {
       const id = parseInt(st.id)
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
-      return { id, username }
+      const username = game.usersAll.find(u => u.id === st.id )?.username || 'Unknown';
+      return { id, username };
     });
     const players = game.players.map(p => {
       const id = parseInt(p.id);
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
+      const username = game.usersAll.find(u => u.id === p.id )?.username || 'Unknown';
       return { id, username };
     });
     const spectators = game.usersAll.filter(u => !players.some(p => p.id === parseInt(u.id)) && !storytellers.some(st => st.id === parseInt(u.id))).map(u => ({ id: parseInt(u.id), username: u.username }));
