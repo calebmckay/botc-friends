@@ -59,7 +59,7 @@ const ListItem = ({ listIndex, itemIndex, name, id, userStatus }) => {
               className="flex-0 text-sm text-black font-semibold bg-gray-300 mx-8 py-0.3 px-2 rounded hover:brightness-70"
               onClick={() => {
                 if (confirm(`Join session "${userStatus.session.name}"?`)) {
-                  window.open(`https://botc.app/join/${userStatus.session.name}`, '_blank')
+                  window.open(`https://botc.app/join/${encodeURIComponent(userStatus.session.name)}`, '_blank')
                 }
               }}
             >
