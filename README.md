@@ -40,7 +40,7 @@ If you don't have VS Code, you can also build the code in a Docker container:
 
 ## Contributors
 
-<!-- readme: contributors -start -->
+<!-- readme: contributors,adil1214 -start -->
 <table>
 	<tbody>
 		<tr>
@@ -65,9 +65,16 @@ If you don't have VS Code, you can also build the code in a Docker container:
                     <sub><b>Sumanth Reddy</b></sub>
                 </a>
             </td>
+            <td align="center">
+                <a href="https://github.com/adil1214">
+                    <img src="https://avatars.githubusercontent.com/u/22710910?v=4" width="100;" alt="adil1214"/>
+                    <br />
+                    <sub><b>ADIL</b></sub>
+                </a>
+            </td>
 		</tr>
 	<tbody>
 </table>
-<!-- readme: contributors -end -->
+<!-- readme: contributors,adil1214 -end -->
 
 *This extension is not affiliated with Blood on the Clocktower or The Pandemonium Institute. Blood on the Clocktower is a trademark of Steven Medway and The Pandemonium Institute.*
