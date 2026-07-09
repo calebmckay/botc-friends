@@ -87,6 +87,13 @@ function persistHighlightClass(row, className, shouldHighlight) {
     return;
   }
 
+  // Add the class immediately - the observer below only fires on later
+  // attribute changes, so without this the highlight never appears on rows
+  // the app framework doesn't re-render (e.g. the last child of tbody).
+  if (!row.classList.contains(className)) {
+    row.classList.add(className);
+  }
+
   const observer = new MutationObserver(() => {
     if (!row.classList.contains(className)) {
       row.classList.add(className);
