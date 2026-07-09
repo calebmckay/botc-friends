@@ -33,17 +33,21 @@ function parseSessions(sessions) {
   }
   const output = [];
   sessions.forEach(game => {
-    const storytellers = game.storytellers.map(st => {
-      const id = parseInt(st.id)
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
-      return { id, username }
-    });
-    const players = game.players.map(p => {
-      const id = parseInt(p.id);
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
-      return { id, username };
-    });
-    const spectators = game.usersAll.filter(u => !players.some(p => p.id === parseInt(u.id)) && !storytellers.some(st => st.id === parseInt(u.id))).map(u => ({ id: parseInt(u.id), username: u.username }));
+    const seats = Array.isArray(game.seats) ? game.seats : [];
+    const users = Array.isArray(game.users) ? game.users : [];
+
+    const occupiedSeats = seats.filter(s => s.id != null);
+    const storytellers = occupiedSeats
+      .filter(s => s.seat < 0)
+      .map(s => ({ id: parseInt(s.id), username: s.username || 'Unknown' }));
+    const players = occupiedSeats
+      .filter(s => s.seat >= 0)
+      .map(s => ({ id: parseInt(s.id), username: s.username || 'Unknown' }));
+
+    const seatedIds = new Set(occupiedSeats.map(s => parseInt(s.id)));
+    const spectators = users
+      .filter(u => !seatedIds.has(parseInt(u.id)))
+      .map(u => ({ id: parseInt(u.id), username: u.username }));
     
     output.push({
       name: game.name,

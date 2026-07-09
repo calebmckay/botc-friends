@@ -197,17 +197,21 @@ async function fetchSessions() {
   const data = await resp.json();
   sessions = [];
   data.forEach(game => {
-    const storytellers = game.storytellers.map(st => {
-      const id = st.id;
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
-      return { id, username };
-    });
-    const players = game.players.map(p => {
-      const id = p.id;
-      const username = game.usersAll.find(u => u.id === id)?.username || 'Unknown';
-      return { id, username };
-    });
-    const spectators = game.usersAll.filter(u => !players.some(p => p.id === u.id) && !storytellers.some(st => st.id === u.id)).map(u => ({ id: u.id, username: u.username }));
+    const seats = Array.isArray(game.seats) ? game.seats : [];
+    const users = Array.isArray(game.users) ? game.users : [];
+
+    const occupiedSeats = seats.filter(s => s.id != null);
+    const storytellers = occupiedSeats
+        .filter(s => s.seat < 0)
+        .map(s => ({ id: parseInt(s.id), username: s.username || 'Unknown' }));
+    const players = occupiedSeats
+        .filter(s => s.seat >= 0)
+        .map(s => ({ id: parseInt(s.id), username: s.username || 'Unknown' }));
+
+    const seatedIds = new Set(occupiedSeats.map(s => parseInt(s.id)));
+    const spectators = users
+        .filter(u => !seatedIds.has(parseInt(u.id)))
+        .map(u => ({ id: parseInt(u.id), username: u.username }));
     
     sessions.push({
       name: game.name,
@@ -238,7 +242,7 @@ function highlightStorytellers(summaryRow, storytellers) {
 
 function highlightPlayers(detailsRow, players) {
   let highestPrecedence = UNSET_PRECEDENCE;
-  detailsRow.querySelectorAll('td li.players span.player').forEach((span, index) => {
+  detailsRow.querySelectorAll('td li.players span.player:not(.empty)').forEach((span, index) => {
     const userId = players[index].id;
     if (Object.prototype.hasOwnProperty.call(userIdMap, userId)) {
       span.classList.add(`botc-friends-${userIdMap[userId]}`);
