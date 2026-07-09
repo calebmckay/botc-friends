@@ -47,7 +47,7 @@
     "globals": "^16.4.0",
     "msw": "^2.11.6",
     "vite": "^7.1.7",
-    "vitest": "^4.0.6",
+    "vitest": "^4.1.0",
     "vitest-browser-react": "^2.0.2",
     "vitest-chrome": "^0.1.0"
   }
